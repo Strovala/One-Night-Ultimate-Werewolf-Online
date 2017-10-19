@@ -16,4 +16,9 @@ app.use('/assets', express.static(__dirname + '/public'));
 
 app.get('/', function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
-})
+});
+
+
+app.get('/start', function (req, res) {
+  res.sendFile(__dirname + '/views/start.html');
+});
