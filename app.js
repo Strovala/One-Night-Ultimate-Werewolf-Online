@@ -28,7 +28,7 @@ app.get('/', function (req, res) {
 
 
 app.get('/start', function (req, res) {
-  console.log(req.query);
+  var username = req.query.username
   res.render('start', {
     title: "One Night Ultimate Werewolf",
     games: [
@@ -41,6 +41,7 @@ app.get('/start', function (req, res) {
         players: 5
       }
     ],
+    username: username,
     gamesText: "Games available",
     create: "Create"
   });

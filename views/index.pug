@@ -9,7 +9,7 @@ html
       h1#choose-text= choose
       h2#username-text= username
       form(action='/start', method='get')
-        input#username(type='text', name='username')
+        input#username(type='text', name='username', required)
         br
         #div-start
           button#start(type='submit')= start
