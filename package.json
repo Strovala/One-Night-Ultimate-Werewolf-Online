@@ -1,0 +1,24 @@
+{
+  "name": "one_night_ultimate_werewolf_online",
+  "version": "1.0.0",
+  "description": "One Night Ultimate Werewolf web game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Strovala/One-Night-Ultimate-Werewolf-Online.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Strovala/One-Night-Ultimate-Werewolf-Online/issues"
+  },
+  "homepage": "https://github.com/Strovala/One-Night-Ultimate-Werewolf-Online#readme",
+  "dependencies": {
+    "express": "^4.16.2",
+    "node-uuid": "^1.4.8",
+    "socket.io": "^2.0.3"
+  }
+}

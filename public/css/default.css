@@ -1,0 +1,61 @@
+@font-face {
+  font-family: 'Awesome';
+  src: url('../fonts/Awesome.otf') format('opentype');
+}
+body {
+  background-image: url("../images/forest_bcg.jpg");
+  font-family: Awesome;
+}
+#content {
+  width: 90%;
+  text-align: center;
+  margin: 0 auto;
+  color: #FFDEAD;
+  font-family: Awesome;
+  font-size: 4.5vw;
+}
+
+h1, h2{
+  text-shadow: -2px 0 #286270, 0 2px #286270, 2px 0 #286270, 0 -2px #286270;
+}
+
+#username-text{
+  padding-left: 25vw;
+  padding-top: 0px;
+  margin-top: 0px;
+
+}
+
+#choose-text{
+  padding-bottom: 0px;
+  margin-bottom: 0px;
+
+}
+#username {
+  width: 40vw;
+  height: 1.5em;
+  border-top-right-radius:30% ;
+  border-bottom-left-radius:30% ;
+  border: 4px solid #FFDEAD;
+  font-size: 4vw;
+  text-align: center;
+  font-family: Awesome;
+  background-color: #286270;
+  color: #FFDEAD;
+}
+
+#div-start {
+  padding-left: 10vw;
+  height: 1.5em;
+}
+
+#start{
+  width : 15vw;
+  border-radius: 20%;
+  border: 4px solid #FFDEAD;
+  font-size: 3vw;
+  text-align: center;
+  font-family: Awesome;
+  background-color: #286270;
+  color: #FFDEAD;
+}
