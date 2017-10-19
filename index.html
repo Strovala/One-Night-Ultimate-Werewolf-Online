@@ -9,10 +9,12 @@
     <div id="content">
       <h1 id = "choose-text">Choose</h1>
       <h2 id = "username-text">Username</h2>
-      <input type="text" id="username"/><br>
-      <div id="div-start">
-        <button type="button" id="start" onclick="">Start</button>
-      </div>
+      <form action="/start" method="get">
+        <input type="text" name="username" id="username"/><br>
+        <div id="div-start">
+          <button type="submit" id="start">Start</button>
+        </div>
+      </form>
     </div>
   </body>
 </html>

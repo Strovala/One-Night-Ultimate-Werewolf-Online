@@ -1,0 +1,15 @@
+doctype html
+html
+  head
+    meta(charset='utf-8')
+    title= title
+    link(rel='stylesheet', href='../assets/css/default.css')
+  body
+    #content
+      h1#choose-text= choose
+      h2#username-text= username
+      form(action='/start', method='get')
+        input#username(type='text', name='username')
+        br
+        #div-start
+          button#start(type='submit')= start
