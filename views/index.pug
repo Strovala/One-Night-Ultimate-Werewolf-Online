@@ -7,11 +7,11 @@ html
     script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
   body
     #content
-      h1#choose-text= choose
-      h2#username-text= username
+      h1#choose-text(style='padding-bottom: 0px; margin-bottom: 0px;')= choose
+      h2#username-text(style='padding-left: 25vw; padding-top: 0px; margin-top: 0px;')= username
       form(action='/start', method='get')
         p#errorMessage(style='color: red; font-size: 1.5vw;')
         input#username(type='text', name='username', maxlength='15', required)
         br
-        #div-start
+        #div-start(style='padding-left: 10vw; height: 1.5em;')
           button#start(type='submit', onclick='return checkUsername();')= start

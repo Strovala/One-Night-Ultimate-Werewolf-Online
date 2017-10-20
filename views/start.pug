@@ -9,19 +9,19 @@ html
       table
         tr
           td(style='padding-top:0; margin-top:0')
-            .list-div
-              h5#games-list-text= gamesText
+            .list-div(style='width: 35vw;')
+              h5#games-list-text(style='text-align: left; margin-bottom: 0;')= gamesText
               hr#separator
             #games
               table(cellspacing="0" cellpadding="0")
                 - var gamesList= games;
                 each game in gamesList
-                  tr#room(onclick="alert('Hey');")
+                  tr#room(style='font-size: 2vw;', onclick="alert('Hey');")
                     td
                       p#roomName= game.name
                     td 
                       p#playersInRoom= game.players
-            #div-create
+            #div-create(style='text-align: left; height: 1.5em;')
               button#create(type='button')= create
           td(style='width: 60%;', valign='top')
             h5(style='text-align: right;') welcome, !{username}

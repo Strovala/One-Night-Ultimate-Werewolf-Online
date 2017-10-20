@@ -19,21 +19,6 @@ h1, h2, h3, h4, h5, h6 {
   text-shadow: -2px 0 #286270, 0 2px #286270, 2px 0 #286270, 0 -2px #286270;
 }
 
-#games-list-text {
-  text-align: left;
-  margin-bottom: 0;
-}
-
-#username-text{
-  padding-left: 25vw;
-  padding-top: 0px;
-  margin-top: 0px;
-}
-
-#room {
-  font-size: 2vw;
-}
-
 #room:hover {
   background-color: #a9a9a9;
 }
@@ -51,15 +36,6 @@ h1, h2, h3, h4, h5, h6 {
   padding-left: 20vw;
 }
 
-.list-div {
-  width: 35vw;
-}
-
-#choose-text{
-  padding-bottom: 0px;
-  margin-bottom: 0px;
-
-}
 #username {
   width: 40vw;
   height: 1.5em;
@@ -79,16 +55,6 @@ h1, h2, h3, h4, h5, h6 {
     border: 0;
     padding: 0;
     border-top: 10px solid #FFDEAD;
-}
-
-#div-start {
-  padding-left: 10vw;
-  height: 1.5em;
-}
-
-#div-create {
-  text-align: left;
-  height: 1.5em;
 }
 
 #start, #create {
