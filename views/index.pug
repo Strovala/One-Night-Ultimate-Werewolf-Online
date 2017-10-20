@@ -9,9 +9,8 @@ html
     #content
       h1#choose-text(style='padding-bottom: 0px; margin-bottom: 0px;')= choose
       h2#username-text(style='padding-left: 25vw; padding-top: 0px; margin-top: 0px;')= username
-      form(action='/start', method='get')
-        p#errorMessage(style='color: red; font-size: 1.5vw;')
-        input#username(type='text', name='username', maxlength='15', autocomplete="off", required)
+      form(action='/start' method='get')
+        input#username(type='text', name='username', autocomplete="off", maxlength='15', pattern=".{3,15}", title="3 to 15 characters", required)
         br
         #div-start(style='padding-left: 10vw; height: 1.5em;')
-          button#start(type='submit', onclick='return checkUsername();')= start
+          button#start(type='submit')= start

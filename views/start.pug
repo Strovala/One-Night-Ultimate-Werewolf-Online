@@ -4,8 +4,23 @@ html
     meta(charset='utf-8')
     title= title
     link(rel='stylesheet', href='../assets/css/default.css')
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js")
   body
     #content
+      #room-create(class='modal')
+        #room-create-div
+          label(for='room-name')= roomName
+          br
+          input#room-name(type='text', name='room-name', autocomplete="off", maxlength='15', pattern=".{3,15}", title="3 to 15 characters", required)
+            
+          table(style='margin: auto')
+            tr
+              td
+                button#create(type='button')= create
+              td(style='padding-left: 10vw;')
+                button#cancel(type='button')= cancel
+                
       table
         tr
           td(style='padding-top:0; margin-top:0')
@@ -16,7 +31,7 @@ html
               table(cellspacing="0" cellpadding="0")
                 - var gamesList= games;
                 each game in gamesList
-                  tr#room(style='font-size: 2vw;', onclick="alert('Hey');")
+                  tr.room(style='font-size: 2vw;', onclick="openModal(this);")
                     td
                       p#roomName= game.name
                     td 
@@ -25,3 +40,15 @@ html
               button#create(type='button')= create
           td(style='width: 60%;', valign='top')
             h5(style='text-align: right;') welcome, !{username}
+            
+    script.
+      var socket = io.connect('http://localhost:3000');
+      var modal = $('#room-create');
+      function openModal(tr) {
+        modal.css({"display": "block"});
+      }
+      var cancel = $('#cancel');
+      cancel.on('click', function() {
+        modal.css({"display": "none"});
+        $('#room-name').val('');
+      });
