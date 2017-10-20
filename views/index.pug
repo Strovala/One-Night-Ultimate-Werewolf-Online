@@ -4,12 +4,14 @@ html
     meta(charset='utf-8')
     title= title
     link(rel='stylesheet', href='../assets/css/default.css')
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
   body
     #content
       h1#choose-text= choose
       h2#username-text= username
       form(action='/start', method='get')
-        input#username(type='text', name='username', required)
+        p#errorMessage(style='color: red; font-size: 1.5vw;')
+        input#username(type='text', name='username', maxlength='15', required)
         br
         #div-start
-          button#start(type='submit')= start
+          button#start(type='submit', onclick='return checkUsername();')= start
