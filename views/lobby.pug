@@ -1,8 +1,8 @@
 include template.pug
 block content
   #content
-    #room-create(class='modal')
-      #room-create-div
+    #modal(class='modal')
+      #modal-div
         label(for='room-name')= roomName
         br
         input#room-name(type='text', name='room-name', autocomplete="off", maxlength='15', pattern=".{3,15}", title="3 to 15 characters", required)
