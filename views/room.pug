@@ -1,0 +1,16 @@
+include template.pug
+block content
+  #content
+    table
+      tr
+        td(style='padding-top:0; margin-top:0')
+          .list-div(style='width: 35vw;')
+            h5#players-list-text(style='text-align: left; margin-bottom: 0;')= gamesText
+            hr#separator
+          #players
+            table(cellspacing="0" cellpadding="0")
+              include playersList.pug
+          #div-create(style='text-align: left; height: 1.5em;')
+            button#start-game(type='button')= start
+        td(style='width: 60%;', valign='top')
+          h5(style='text-align: right;') welcome, !{username}

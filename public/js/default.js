@@ -35,14 +35,16 @@ function onLobyStart() {
   });
 
   socket.on('new-room-aproved', function(data) {
+    $modal.css({"display": "none"});
+  });
+
+  socket.on('new-room-created', function (data) {
     var page = $(data.page);
     var content = $.grep(page, function(e) {
       return e.id == 'content';
     });
     $('#content').html(content);
     onLobyStart();
-    $modal.css({"display": "none"});
-    
   });
 }
 
