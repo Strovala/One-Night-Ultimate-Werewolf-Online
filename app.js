@@ -44,6 +44,15 @@ PLAYERS.delete = function PLAYERS_delete(username) {
   delete this[username];
 }
 
+PLAYERS.toList = function PLAYERS_toList() {
+  var values = [];
+  for(var key in this) {
+    if (this.hasOwnProperty(key) && typeof this[key] != 'function')
+      values.push(this[key]);
+  }
+  return values;
+}
+
 var ROOMS = {};
 
 ROOMS.exists = function ROOMS_exists(roomName) {
@@ -61,6 +70,15 @@ ROOMS.delete = function ROOMS_delete(roomName) {
   delete this[roomName];
 }
 
+ROOMS.toList = function ROOMS_toList() {
+  var values = [];
+  for(var key in this) {
+    if (this.hasOwnProperty(key) && typeof this[key] != 'function')
+      values.push(this[key]);
+  }
+  return values;
+}
+
 io.sockets.on('connection', function (client) {
   console.log('New connection : ' + client.id);
 
@@ -68,6 +86,43 @@ io.sockets.on('connection', function (client) {
     PLAYERS.delete(client.username);
     console.log('Deleted player with username ' + client.username);
     console.log(client.id + ' disconnected');
+  });
+
+  client.on('new-room-request', function (data) {
+    console.log(client.id + ' requested creation of a room with name ' + data.roomName);
+    var roomName = data.roomName || '';
+    // Check if room name is valid
+    roomName = roomName.toLowerCase();
+    // If someone sent us a postman-like request, because on client we checked this
+    if (roomName.length < 3 || roomName.length > 15) {
+      client.emit('new-room-declined', {
+        errorMessage: 'Room name must contain 3 to 15 characters'
+      });
+      return;
+    }
+    if (ROOMS.exists(roomName)) {
+      client.emit('new-room-declined', {
+        errorMessage: 'Room name taken'
+      });
+      return;
+    }
+
+    // Add room to rooms list
+    ROOMS.add(roomName);
+    console.log('Added new room with name ' + roomName);
+
+    // Create rooms list data to send
+    var rooms = ROOMS.toList().map(function (room) {
+      return {
+        name: room.name,
+        players: room.players
+      }
+    });
+
+    //TODO: send update to all clients
+
+    // Send client data
+    client.emit('new-room-aproved');
   });
 
   client.on('login-request', function (data) {
@@ -93,21 +148,20 @@ io.sockets.on('connection', function (client) {
     PLAYERS.add(username, client);
     console.log('Added new player with username ' + username);
 
+    // Create rooms list data to send
+    var rooms = ROOMS.toList().map(function (room) {
+      return {
+        name: room.name,
+        players: room.players
+      }
+    });
+
     // Compile lobby page
     var page = pug.compileFile('./views/lobby.pug')({
       title: "One Night Ultimate Werewolf",
       roomName: "Room name",
       cancel: "Cancel",
-      rooms: [
-        {
-          name: "Krimina",
-          players: 3
-        },
-        {
-          name: "PrsssssssSiprina",
-          players: 5
-        }
-      ],
+      rooms: rooms,
       username: username,
       gamesText: "Rooms available",
       create: "Create"
