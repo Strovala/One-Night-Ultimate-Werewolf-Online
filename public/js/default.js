@@ -2,6 +2,22 @@ var $start = $('#start');
 var $username = $('#username');
 var $errorMessage = $('.errorMessage');
 
+function onRoomStart() {
+  var $backToLobby = $('#back-to-lobby');
+
+  $backToLobby.click(function () {
+    socket.emit('back-to-lobby');
+  });
+
+  socket.on('back-to-lobby-approved', function (data) {
+    var page = $(data.page);
+    var content = $.grep(page, function(e) {
+      return e.id == 'content';
+    });
+    $('#content').html(content);
+  });
+}
+
 // Function called when lobby is ready to load
 function onLobyStart() {
   var $modal = $('#modal');
@@ -58,6 +74,7 @@ function onLobyStart() {
       return e.id == 'content';
     });
     $('#content').html(content);
+    onRoomStart();
   });
 }
 
@@ -100,4 +117,5 @@ function enterRoom(room) {
     admin: false,
     roomName: roomName
   });
+  onRoomStart();
 }

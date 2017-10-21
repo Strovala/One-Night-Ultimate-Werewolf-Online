@@ -25,7 +25,8 @@ app.get('/', function (req, res) {
     title: "One Night Ultimate Werewolf",
     choose: "Choose",
     username: "Username",
-    start: "Start"
+    start: "Start",
+    back: "Back"
   });
 });
 
@@ -89,6 +90,31 @@ io.sockets.on('connection', function (client) {
     console.log(client.id + ' disconnected');
   });
 
+  client.on('back-to-lobby', function () {
+    // Create rooms list data to send
+    var rooms = ROOMS.toList().map(function (room) {
+      return {
+        name: room.name,
+        players: room.players
+      }
+    });
+
+    // Compile lobby page
+    var page = pug.compileFile('./views/lobby.pug')({
+      title: "One Night Ultimate Werewolf",
+      roomName: "Room name",
+      cancel: "Cancel",
+      rooms: rooms,
+      username: client.username,
+      roomsText: "Rooms available",
+      create: "Create"
+    });
+    // Send client data
+    client.emit('back-to-lobby-approved', {
+      page: page
+    });
+  });
+
   client.on('enter-room', function (data) {
     var admin = data.admin;
     var roomName = data.roomName;
@@ -102,7 +128,8 @@ io.sockets.on('connection', function (client) {
         }
       ],
       roomName: roomName,
-      start: "Start"
+      start: "Start",
+      back: "Back"
     });
 
     // Update that player isn't in lobby anymore
