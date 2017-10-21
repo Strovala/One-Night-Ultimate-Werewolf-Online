@@ -27,6 +27,13 @@ function onLobyStart() {
   var $roomName = $('#room-name');
   var $errorMessage = $('.errorMessage');
 
+  $roomName.keyup(function(event) {
+    // If clicked Enter
+    if (event.keyCode == 13) {
+        $createRoom.click();
+    }
+  });
+
   $openModal.click(function () {
     $modal.css({"display": "block"});
   });
