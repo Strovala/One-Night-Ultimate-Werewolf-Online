@@ -5,9 +5,9 @@ var $errorMessage = $('#errorMessage');
 // Function called when lobby is ready to load
 function onLobyStart() {
   var $modal = $('#modal');
-  var $create = $('#open-modal');
+  var $openModal = $('#open-modal');
 
-  $create.click(function () {
+  $openModal.click(function () {
     $modal.css({"display": "block"});
   });
   var $cancel = $('#cancel');
