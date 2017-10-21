@@ -4,9 +4,12 @@ var $errorMessage = $('.errorMessage');
 
 function onRoomStart() {
   var $backToLobby = $('#back-to-lobby');
+  var $roomName = $('#room-name-text');
 
   $backToLobby.click(function () {
-    socket.emit('back-to-lobby');
+    socket.emit('back-to-lobby', {
+      roomName: $roomName.text()
+    });
   });
 
   socket.on('back-to-lobby-approved', function (data) {
@@ -15,6 +18,7 @@ function onRoomStart() {
       return e.id == 'content';
     });
     $('#content').html(content);
+    onLobyStart();
   });
 }
 
@@ -59,7 +63,6 @@ function onLobyStart() {
 
   socket.on('new-room-aproved', function(data) {
     var roomName = data.roomName;
-    debugger;
     socket.emit('enter-room', {
       admin: true,
       roomName: roomName
