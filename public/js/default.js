@@ -2,10 +2,6 @@ var $start = $('#start');
 var $username = $('#username');
 var $errorMessage = $('.errorMessage');
 
-function enterRoom(room) {
-  debugger;
-}
-
 // Function called when lobby is ready to load
 function onLobyStart() {
   var $modal = $('#modal');
@@ -96,3 +92,12 @@ socket.on('login-declined', function(data) {
   var errorMessage = data.errorMessage;
   $errorMessage.text(errorMessage);
 });
+
+function enterRoom(room) {
+  room = $(room);
+  var roomName = $(room.find('#roomName')).text();
+  socket.emit('enter-room', {
+    admin: false,
+    roomName: roomName
+  });
+}
