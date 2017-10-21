@@ -30,6 +30,7 @@ app.get('/', function (req, res) {
 });
 
 var PLAYERS = {};
+
 PLAYERS.exists = function PLAYERS_exists(username) {
   return this[username];
 }
@@ -41,6 +42,23 @@ PLAYERS.add = function PLAYERS_add(username, client) {
 
 PLAYERS.delete = function PLAYERS_delete(username) {
   delete this[username];
+}
+
+var ROOMS = {};
+
+ROOMS.exists = function ROOMS_exists(roomName) {
+  return this[roomName];
+}
+
+ROOMS.add = function ROOMS_add(roomName) {
+  this[roomName] = {
+    name: roomName,
+    players: 0
+  };
+}
+
+ROOMS.delete = function ROOMS_delete(roomName) {
+  delete this[roomName];
 }
 
 io.sockets.on('connection', function (client) {
