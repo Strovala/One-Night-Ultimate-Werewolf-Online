@@ -17,7 +17,7 @@ html
           table(style='margin: auto')
             tr
               td
-                button#create(type='button')= create
+                button#create-room(type='button')= create
               td(style='padding-left: 10vw;')
                 button#cancel(type='button')= cancel
                 
@@ -31,7 +31,7 @@ html
               table(cellspacing="0" cellpadding="0")
                 - var gamesList= games;
                 each game in gamesList
-                  tr.room(style='font-size: 2vw;', onclick="openModal(this);")
+                  tr.room(style='font-size: 2vw;')
                     td
                       p#roomName= game.name
                     td 
@@ -44,9 +44,11 @@ html
     script.
       var socket = io.connect('http://localhost:3000');
       var modal = $('#room-create');
-      function openModal(tr) {
+      var create = $('#create');
+      debugger;
+      create.on('click', function () {
         modal.css({"display": "block"});
-      }
+      });
       var cancel = $('#cancel');
       cancel.on('click', function() {
         modal.css({"display": "none"});
