@@ -1,6 +1,6 @@
 - var roomsList= rooms;
 each room in roomsList
-  tr.room(style='font-size: 2vw;')
+  tr.room(style='font-size: 2vw;', onclick="enterRoom(this);")
     td
       p#roomName= room.name
     td 

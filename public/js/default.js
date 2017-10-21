@@ -2,6 +2,10 @@ var $start = $('#start');
 var $username = $('#username');
 var $errorMessage = $('.errorMessage');
 
+function enterRoom(room) {
+  debugger;
+}
+
 // Function called when lobby is ready to load
 function onLobyStart() {
   var $modal = $('#modal');
@@ -35,7 +39,12 @@ function onLobyStart() {
   });
 
   socket.on('new-room-aproved', function(data) {
-    $modal.css({"display": "none"});
+    var roomName = data.roomName;
+    debugger;
+    socket.emit('enter-room', {
+      admin: true,
+      roomName: roomName
+    });
   });
 
   socket.on('new-room-created', function (data) {
@@ -45,6 +54,14 @@ function onLobyStart() {
     });
     $('#content').html(content);
     onLobyStart();
+  });
+
+  socket.on('enter-room-aproved', function (data) {
+    var page = $(data.page);
+    var content = $.grep(page, function(e) {
+      return e.id == 'content';
+    });
+    $('#content').html(content);
   });
 }
 

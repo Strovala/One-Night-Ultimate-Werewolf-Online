@@ -57,7 +57,7 @@ h1, h2, h3, h4, h5, h6 {
     border-top: 10px solid #FFDEAD;
 }
 
-#start, #open-modal, #create-room, #cancel {
+#start, #open-modal, #create-room, #cancel, #start-game {
   width : 15vw;
   border-radius: 20%;
   border: 4px solid #FFDEAD;

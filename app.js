@@ -89,6 +89,31 @@ io.sockets.on('connection', function (client) {
     console.log(client.id + ' disconnected');
   });
 
+  client.on('enter-room', function (data) {
+    var admin = data.admin;
+    var roomName = data.roomName;
+
+    // Compile lobby page
+    var page = pug.compileFile('./views/room.pug')({
+      title: "One Night Ultimate Werewolf",
+      players: [
+        {
+          username: 'Krimina'
+        }
+      ],
+      roomName: roomName,
+      start: "Start"
+    });
+
+    // Update that player isn't in lobby anymore
+    client.inLobby = false;
+
+    // Send client data
+    client.emit('enter-room-aproved', {
+      page: page
+    });
+  });
+
   client.on('new-room-request', function (data) {
     console.log(client.id + ' requested creation of a room with name ' + data.roomName);
     var roomName = data.roomName || '';
@@ -112,9 +137,11 @@ io.sockets.on('connection', function (client) {
     ROOMS.add(roomName);
     console.log('Added new room with name ' + roomName);
 
-    // Update that player isnt in lobby anymore
+    // Update that player isn't in lobby anymore
     client.inLobby = false;
-    client.emit('new-room-aproved');
+    client.emit('new-room-aproved', {
+      roomName: roomName
+    });
 
     // Create rooms list data to send
     var rooms = ROOMS.toList().map(function (room) {
@@ -124,22 +151,20 @@ io.sockets.on('connection', function (client) {
       }
     });
 
-    // Compile lobby page
-
-
     // Send update to all clients who are in lobby
     PLAYERS.toList().forEach(function (player) {
       if (player.inLobby) {
-        // Send client data
+        // Compile lobby page
         var page = pug.compileFile('./views/lobby.pug')({
           title: "One Night Ultimate Werewolf",
           roomName: "Room name",
           cancel: "Cancel",
           rooms: rooms,
           username: player.username,
-          gamesText: "Rooms available",
+          roomsText: "Rooms available",
           create: "Create"
         });
+        // Send client data
         player.emit('new-room-created', {
           page: page
         });
@@ -187,7 +212,7 @@ io.sockets.on('connection', function (client) {
       cancel: "Cancel",
       rooms: rooms,
       username: username,
-      gamesText: "Rooms available",
+      roomsText: "Rooms available",
       create: "Create"
     });
 
