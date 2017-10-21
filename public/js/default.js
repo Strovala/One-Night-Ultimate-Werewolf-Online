@@ -4,14 +4,15 @@ var $errorMessage = $('#errorMessage');
 
 // Function called when lobby is ready to load
 function onLobyStart() {
-  var modal = $('#room-create');
-  var create = $('#create');
-  create.click(function () {
-    modal.css({"display": "block"});
+  var $modal = $('#room-create');
+  var $create = $('#create');
+
+  $create.click(function () {
+    $modal.css({"display": "block"});
   });
-  var cancel = $('#cancel');
-  cancel.click(function() {
-    modal.css({"display": "none"});
+  var $cancel = $('#cancel');
+  $cancel.click(function() {
+    $modal.css({"display": "none"});
     $('#room-name').val('');
   });
 }
