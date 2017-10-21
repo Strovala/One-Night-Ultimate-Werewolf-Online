@@ -28,15 +28,14 @@ block content
           h5(style='text-align: right;') welcome, !{username}
           
   script.
-    var socket = io.connect('http://localhost:3000');
     var modal = $('#room-create');
     var create = $('#create');
     debugger;
-    create.on('click', function () {
+    create.click(function () {
       modal.css({"display": "block"});
     });
     var cancel = $('#cancel');
-    cancel.on('click', function() {
+    cancel.click(function() {
       modal.css({"display": "none"});
       $('#room-name').val('');
     });
