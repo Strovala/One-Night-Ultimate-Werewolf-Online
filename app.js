@@ -29,13 +29,13 @@ app.get('/', function (req, res) {
 });
 
 
-app.get('/start', function (req, res) {
-  var username = req.query.username
-  res.render('start', {
+app.get('/lobby', function (req, res) {
+  var username = req.query.username.toLowerCase();
+  res.render('lobby', {
     title: "One Night Ultimate Werewolf",
     roomName: "Room name",
     cancel: "Cancel",
-    games: [
+    rooms: [
       {
         name: "Krimina",
         players: 3
@@ -46,7 +46,7 @@ app.get('/start', function (req, res) {
       }
     ],
     username: username,
-    gamesText: "Games available",
+    gamesText: "Rooms available",
     create: "Create"
   });
 });
