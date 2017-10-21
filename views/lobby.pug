@@ -26,16 +26,3 @@ block content
             button#create(type='button')= create
         td(style='width: 60%;', valign='top')
           h5(style='text-align: right;') welcome, !{username}
-          
-  script.
-    var modal = $('#room-create');
-    var create = $('#create');
-    debugger;
-    create.click(function () {
-      modal.css({"display": "block"});
-    });
-    var cancel = $('#cancel');
-    cancel.click(function() {
-      modal.css({"display": "none"});
-      $('#room-name').val('');
-    });
