@@ -5,7 +5,7 @@ var $errorMessage = $('#errorMessage');
 // Function called when lobby is ready to load
 function onLobyStart() {
   var $modal = $('#room-create');
-  var $create = $('#create');
+  var $create = $('#open-modal');
 
   $create.click(function () {
     $modal.css({"display": "block"});

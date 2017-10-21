@@ -57,7 +57,7 @@ h1, h2, h3, h4, h5, h6 {
     border-top: 10px solid #FFDEAD;
 }
 
-#start, #create, #create-room, #cancel {
+#start, #open-modal, #create-room, #cancel {
   width : 15vw;
   border-radius: 20%;
   border: 4px solid #FFDEAD;
