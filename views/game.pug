@@ -1,4 +1,8 @@
 extends template.pug
 block content
-  #content
-    
+  #content(style='width: 100%;')
+    - var players= playersList
+    each player in players
+      .player-div(onclick='playerClicked(this);')
+        p#player-username(style='color: white; font-size: 1vw;')= player.username
+        img#card-back.card-back-image(src="../assets/images/card-back.png", alt="Player")
