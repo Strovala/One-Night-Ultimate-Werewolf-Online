@@ -161,6 +161,32 @@ io.sockets.on('connection', function (client) {
     updateLobby();
   });
 
+  client.on('start-game-request', function (data) {
+    var roles = data.roles;
+    var roomName = data.roomName;
+    var rolesInTheMiddleNumber = 3;
+
+    // Check if there is a valid number of players
+    var room = ROOMS.exists(roomName);
+    var roomPlayersNumber = room.players.toList().length;
+    if (roomPlayersNumber < 3 || roomPlayersNumber > 10) {
+      client.emit('start-game-declined', {
+        errorMessage: "Number of players must be from 3 to 10"
+      });
+      return;
+    }
+
+    // Check if selected roles number is equal to players in room number
+    if (roomPlayersNumber + rolesInTheMiddleNumber != roles.length) {
+      client.emit('start-game-declined', {
+        errorMessage: "Incomatible number of roles and players"
+      });
+      return;
+    }
+
+    // TODO: START GAME
+  });
+
   client.on('back-to-lobby', function (data) {
     var roomName = data.roomName;
 

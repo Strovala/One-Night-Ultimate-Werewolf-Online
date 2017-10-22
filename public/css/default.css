@@ -86,3 +86,9 @@ h1, h2, h3, h4, h5, h6 {
   color: red;
   font-size: 2vw;
 }
+
+.role-image {
+  opacity: 0.5;
+  width: 5vw;
+  font-size: 1.5vw;
+}

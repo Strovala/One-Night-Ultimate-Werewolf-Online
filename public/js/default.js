@@ -5,11 +5,40 @@ var $errorMessage = $('.errorMessage');
 function onRoomStart() {
   var $backToLobby = $('#back-to-lobby');
   var $roomName = $('#room-name-text');
+  var $startGame = $('#start-game');
+  var $errorMessage = $('.errorMessage');
 
   $backToLobby.click(function () {
     socket.emit('back-to-lobby', {
       roomName: $roomName.text()
     });
+    audioClick.play();
+  });
+
+  $startGame.click(function () {
+    // Collect selected roles
+    var $roles = $('.role-image');
+    var roles = [];
+    for (var i = 0; i < $roles.length; i++) {
+      var role = $($roles[i]);
+      var roleOpacity = role.css('opacity');
+      var roleId = role.attr('id');
+      if (roleOpacity == 1) {
+        roles.push({
+          id: roleId
+        });
+      }
+    }
+    socket.emit('start-game-request', {
+      roles: roles,
+      roomName: $roomName.text()
+    });
+    audioClick.play();
+  });
+
+  socket.on('start-game-declined', function (data) {
+    var errorMessage = data.errorMessage;
+    $errorMessage.text(errorMessage);
   });
 }
 
@@ -32,12 +61,14 @@ function onLobyStart() {
   $openModal.click(function () {
     $modal.css({"display": "block"});
     $roomName.focus();
+    audioClick.play();
   });
 
   $cancel.click(function() {
     $modal.css({"display": "none"});
     $roomName.val('');
     $errorMessage.text('');
+    audioClick.play();
   });
 
   $createRoom.click(function () {
@@ -46,6 +77,7 @@ function onLobyStart() {
       $errorMessage.text('Room name must contain 3 to 15 characters');
     else
       socket.emit('new-room-request', {roomName: $roomName.val()});
+    audioClick.play();
   });
 
   socket.on('new-room-declined', function(data) {
@@ -54,7 +86,6 @@ function onLobyStart() {
   });
 
   socket.on('new-room-aproved', function(data) {
-    debugger;
     var roomName = data.roomName;
     socket.emit('enter-room', {
       roomName: roomName
@@ -68,6 +99,7 @@ $start.click(function() {
     $errorMessage.text('Username must contain 3 to 15 characters');
   else
     socket.emit('login-request', {username: $username.val()});
+  audioClick.play();
 });
 
 $username.keyup(function(event) {
@@ -109,3 +141,21 @@ function enterRoom(room) {
     roomName: roomName
   });
 }
+
+function toogleRoleImage(img) {
+  var img = $(img);
+  var lastOpacity = img.css('opacity');
+  var newOpacity;
+  if (lastOpacity == 1) {
+    newOpacity = 0.5;
+    audioToogleOff.play();
+  } else {
+    newOpacity = 1;
+    audioToogleOn.play();
+  }
+  img.css('opacity', newOpacity);
+}
+
+var audioClick = new Audio('../assets/sounds/click.mp3');
+var audioToogleOn = new Audio('../assets/sounds/toogle-on.mp3');
+var audioToogleOff = new Audio('../assets/sounds/toogle-off.mp3');
