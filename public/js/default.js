@@ -5,12 +5,40 @@ var $errorMessage = $('.errorMessage');
 function onRoomStart() {
   var $backToLobby = $('#back-to-lobby');
   var $roomName = $('#room-name-text');
+  var $startGame = $('#start-game');
+  var $errorMessage = $('.errorMessage');
 
   $backToLobby.click(function () {
     socket.emit('back-to-lobby', {
       roomName: $roomName.text()
     });
     audioClick.play();
+  });
+
+  $startGame.click(function () {
+    // Collect selected roles
+    var $roles = $('.role-image');
+    var roles = [];
+    for (var i = 0; i < $roles.length; i++) {
+      var role = $($roles[i]);
+      var roleOpacity = role.css('opacity');
+      var roleId = role.attr('id');
+      if (roleOpacity == 1) {
+        roles.push({
+          id: roleId
+        });
+      }
+    }
+    socket.emit('start-game-request', {
+      roles: roles,
+      roomName: $roomName.text()
+    });
+    audioClick.play();
+  });
+
+  socket.on('start-game-declined', function (data) {
+    var errorMessage = data.errorMessage;
+    $errorMessage.text(errorMessage);
   });
 }
 
