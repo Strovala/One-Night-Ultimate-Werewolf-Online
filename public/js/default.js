@@ -54,7 +54,6 @@ function onLobyStart() {
   });
 
   socket.on('new-room-aproved', function(data) {
-    debugger;
     var roomName = data.roomName;
     socket.emit('enter-room', {
       roomName: roomName
@@ -108,4 +107,13 @@ function enterRoom(room) {
   socket.emit('enter-room', {
     roomName: roomName
   });
+}
+
+function toogleRoleImage(img) {
+  var img = $(img);
+  var lastOpacity = img.css('opacity');
+  var newOpacity = 1;
+  if (lastOpacity == 1)
+    newOpacity = 0.5;
+  img.css('opacity', newOpacity);
 }
