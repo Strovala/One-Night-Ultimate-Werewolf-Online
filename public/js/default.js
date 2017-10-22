@@ -10,6 +10,7 @@ function onRoomStart() {
     socket.emit('back-to-lobby', {
       roomName: $roomName.text()
     });
+    audioClick.play();
   });
 }
 
@@ -32,12 +33,14 @@ function onLobyStart() {
   $openModal.click(function () {
     $modal.css({"display": "block"});
     $roomName.focus();
+    audioClick.play();
   });
 
   $cancel.click(function() {
     $modal.css({"display": "none"});
     $roomName.val('');
     $errorMessage.text('');
+    audioClick.play();
   });
 
   $createRoom.click(function () {
@@ -46,6 +49,7 @@ function onLobyStart() {
       $errorMessage.text('Room name must contain 3 to 15 characters');
     else
       socket.emit('new-room-request', {roomName: $roomName.val()});
+    audioClick.play();
   });
 
   socket.on('new-room-declined', function(data) {
@@ -67,6 +71,7 @@ $start.click(function() {
     $errorMessage.text('Username must contain 3 to 15 characters');
   else
     socket.emit('login-request', {username: $username.val()});
+  audioClick.play();
 });
 
 $username.keyup(function(event) {
@@ -112,10 +117,17 @@ function enterRoom(room) {
 function toogleRoleImage(img) {
   var img = $(img);
   var lastOpacity = img.css('opacity');
-  var newOpacity = 1;
-  if (lastOpacity == 1)
+  var newOpacity;
+  if (lastOpacity == 1) {
     newOpacity = 0.5;
+    audioToogleOff.play();
+  } else {
+    newOpacity = 1;
+    audioToogleOn.play();
+  }
   img.css('opacity', newOpacity);
 }
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
+var audioToogleOn = new Audio('../assets/sounds/toogle-on.mp3');
+var audioToogleOff = new Audio('../assets/sounds/toogle-off.mp3');
