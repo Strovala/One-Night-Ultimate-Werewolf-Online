@@ -77,7 +77,7 @@ $username.keyup(function(event) {
   }
 });
 
-var socket = io.connect('http://localhost:3000');
+var socket = io.connect('http://192.168.0.219:3000');
 
 socket.on('update-lobby', function (data) {
   var page = $(data.page);

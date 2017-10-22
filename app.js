@@ -151,6 +151,14 @@ io.sockets.on('connection', function (client) {
     PLAYERS.delete(client.username);
     console.log('Deleted player with username ' + client.username);
     console.log(client.id + ' disconnected');
+
+    // Update room where player maybe was
+    var room = ROOMS.exists(client.roomName);
+    if (room) {
+      room.players.delete(client.username);
+      updateRoom(room.name);
+    }
+    updateLobby();
   });
 
   client.on('back-to-lobby', function (data) {
