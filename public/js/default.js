@@ -117,3 +117,5 @@ function toogleRoleImage(img) {
     newOpacity = 0.5;
   img.css('opacity', newOpacity);
 }
+
+var audioClick = new Audio('../assets/sounds/click.mp3');
