@@ -35,7 +35,9 @@ app.get('/game', function (req, res) {
   res.render('game', {
     playersList: [
       {
-        username: 'Krimina'
+        username: 'Krimina',
+        top: 30,
+        left: 30
       },
       {
         username: 'Piprina'
@@ -276,22 +278,23 @@ io.sockets.on('connection', function (client) {
     }
 
     // Get players from room
-    var players = room.players.toList().map(function (player) {
+    var players = room.players.toList().map(function (player, ind) {
+      var pos = POSITIONS[ind];
       return {
-        username: player.username
+        username: player.username,
+        top: pos.top,
+        left: pos.left
       }
-    });
-
-    var positions = players.map(function (player, ind) {
-      return POSITIONS[ind];
     });
 
     // Add fake user for center cards
     for (var i = 1; i <= rolesInTheMiddleNumber; i++) {
+      var pos = POSITIONS[10 + i - 1];
       players.push({
-        username: 'c' + i
+        username: 'c' + i,
+        top: pos.top,
+        left: pos.left
       });
-      positions.push(POSITIONS[10 + i - 1]);
     }
 
     // Send clients to start a game
@@ -303,8 +306,7 @@ io.sockets.on('connection', function (client) {
 
       // Send client data
       player.emit('start-game', {
-        page: page,
-        positions: positions
+        page: page
       });
     });
 
