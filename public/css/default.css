@@ -92,3 +92,13 @@ h1, h2, h3, h4, h5, h6 {
   width: 5vw;
   font-size: 1.5vw;
 }
+
+.card-back-image {
+  width: 5vw;
+  font-size: 1.5vw;
+}
+
+.player-div {
+  text-align: center;
+  -webkit-transform: translate(-70%, -65%); /* Set pivot to center */
+}

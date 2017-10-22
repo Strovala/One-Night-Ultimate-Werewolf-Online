@@ -2,6 +2,26 @@ var $start = $('#start');
 var $username = $('#username');
 var $errorMessage = $('.errorMessage');
 
+function onGameStart(positions) {
+  debugger;
+
+  var $playerDivs = $(".player-div");
+  $($playerDivs[0]).parent().css({position: 'relative'});
+
+  for (var i = 0; i < $playerDivs.length; i++) {
+    var pos = positions[i];
+    var playerDiv = $($playerDivs[i]);
+    playerDiv.css({'top': pos.top + 'vh'});
+    playerDiv.css({'left': pos.left + 'vw'});
+    playerDiv.css({'position':'absolute'});
+
+    var $username = playerDiv.find('#player-username');
+    var username = $username.text();
+    if (username == 'c1' || username == 'c2' || username == 'c3' || username == 'c4')
+      $username.css('display', 'none');
+  }
+}
+
 function onRoomStart() {
   var $backToLobby = $('#back-to-lobby');
   var $roomName = $('#room-name-text');
@@ -17,18 +37,7 @@ function onRoomStart() {
 
   $startGame.click(function () {
     // Collect selected roles
-    var $roles = $('.role-image');
-    var roles = [];
-    for (var i = 0; i < $roles.length; i++) {
-      var role = $($roles[i]);
-      var roleOpacity = role.css('opacity');
-      var roleId = role.attr('id');
-      if (roleOpacity == 1) {
-        roles.push({
-          id: roleId
-        });
-      }
-    }
+    var roles = getRoles();
     socket.emit('start-game-request', {
       roles: roles,
       roomName: $roomName.text()
@@ -39,6 +48,19 @@ function onRoomStart() {
   socket.on('start-game-declined', function (data) {
     var errorMessage = data.errorMessage;
     $errorMessage.text(errorMessage);
+  });
+
+
+  socket.on('start-game', function (data) {
+    debugger;
+    var page = $(data.page);
+    var content = $.grep(page, function(e) {
+      return e.id == 'content';
+    });
+    $('#content').html(content);
+    // Prepare width for game page
+    $('#content').css('width', '100%')
+    onGameStart(data.positions);
   });
 }
 
@@ -109,7 +131,8 @@ $username.keyup(function(event) {
   }
 });
 
-var socket = io.connect('http://365264ba.ngrok.io');
+// var socket = io.connect('http://365264ba.ngrok.io');
+var socket = io.connect('http://localhost:3000');
 
 socket.on('update-lobby', function (data) {
   var page = $(data.page);
@@ -154,6 +177,33 @@ function toogleRoleImage(img) {
     audioToogleOn.play();
   }
   img.css('opacity', newOpacity);
+
+  var roles = getRoles();
+  var roomName = $('#room-name-text').text();
+  debugger;
+  socket.emit('toogled-role', {
+    roles: roles,
+    roomName: roomName
+  });
+}
+
+function getRoles() {
+  var $roles = $('.role-image');
+  var roles = [];
+  for (var i = 0; i < $roles.length; i++) {
+    var role = $($roles[i]);
+    var roleOpacity = role.css('opacity');
+    var roleId = role.attr('id');
+    roles.push({
+      id: roleId,
+      clicked: roleOpacity == 1
+    });
+  }
+  return roles;
+}
+
+function playerClicked(div) {
+  console.log('clicked ' + $(div).find('#player-username').text());
 }
 
 var audioClick = new Audio('../assets/sounds/click.mp3');

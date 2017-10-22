@@ -1,37 +1,17 @@
 table
-  tr
-    td
-      include roles/doppelganger.pug
-    td
-      include roles/werewolf.pug
-    td
-      include roles/werewolf.pug
-    td
-      include roles/minion.pug
+  - var roles= rolesList
+  -
+    var rows = [
+      roles.slice(0, 4),
+      roles.slice(4, 8),
+      roles.slice(8, 12),
+      roles.slice(12, 16)
+    ];
+  each row in rows
     tr
+    each role in row
+      - var imageAttrs = {}
+      - var opacity = role.clicked ? 1 : 0.5 ;
+      - imageAttrs.style = 'opacity: ' + opacity + ';'
       td
-        include roles/mason.pug
-      td
-        include roles/mason.pug
-      td
-        include roles/seer.pug
-      td
-        include roles/robber.pug
-    tr
-      td
-        include roles/troublemaker.pug
-      td
-        include roles/villager.pug
-      td
-        include roles/villager.pug
-      td
-        include roles/villager.pug
-    tr
-      td
-        include roles/tanner.pug
-      td
-        include roles/insomniac.pug
-      td
-        include roles/hunter.pug
-      td
-        include roles/drunk.pug
+        img.role-image(id='' + role.id, src="../assets/images/roles/" + role.id + ".png", alt="Role", onclick='toogleRoleImage(this);')&attributes(imageAttrs)

@@ -33,8 +33,73 @@ app.get('/', function (req, res) {
 
 app.get('/game', function (req, res) {
   res.render('game', {
+    playersList: [
+      {
+        username: 'Krimina'
+      },
+      {
+        username: 'Piprina'
+      },
+      {
+        username: 'Viprina'
+      },
+      {
+        username: 'Krimina'
+      },
+      {
+        username: 'Piprina'
+      },
+      {
+        username: 'Viprina'
+      },
+      {
+        username: 'Kri'
+      },
+      {
+        username: '123456789012345'
+      },
+      {
+        username: 'Viprina'
+      },
+      {
+        username: 'Krimina'
+      },
+      {
+        username: 'c1'
+      },
+      {
+        username: 'c2'
+      },
+      {
+        username: 'c3'
+      },
+      {
+        username: 'c4'
+      }
+    ]
   });
 });
+
+
+ROLES = [
+  { id: 'doppelganger', clicked: false }, { id: 'werewolf',     clicked: false },
+  { id: 'werewolf',     clicked: false }, { id: 'minion',       clicked: false },
+  { id: 'mason',        clicked: false }, { id: 'mason',        clicked: false },
+  { id: 'seer',         clicked: false }, { id: 'robber',       clicked: false },
+  { id: 'troublemaker', clicked: false }, { id: 'villager',     clicked: false },
+  { id: 'villager',     clicked: false }, { id: 'villager',     clicked: false },
+  { id: 'tanner',       clicked: false }, { id: 'insomniac',    clicked: false },
+  { id: 'hunter',       clicked: false }, { id: 'drunk',        clicked: false }
+];
+
+var POSITIONS = [
+  { top: 15, left: 33  }, { top: 15, left: 50  }, { top: 15, left: 66  },
+  { top: 85, left: 33  }, { top: 85, left: 50  }, { top: 85, left: 66  },
+  { top: 33, left:  8  }, { top: 66, left:  8  },
+  { top: 33, left: 92  }, { top: 66, left: 92  },
+  { top: 40, left: 40  }, { top: 40, left: 50  }, { top: 40, left: 60  },
+  { top: 60, left: 50  }
+];
 
 var Players = function () {}
 
@@ -72,7 +137,8 @@ ROOMS.exists = function ROOMS_exists(roomName) {
 ROOMS.add = function ROOMS_add(roomName) {
   this[roomName] = {
     name: roomName,
-    players: new Players()
+    players: new Players(),
+    roles: ROLES.slice()
   };
 }
 
@@ -138,6 +204,7 @@ function updateRoom(roomName) {
         title: "One Night Ultimate Werewolf",
         players: players,
         roomName: roomName,
+        rolesList: ROOMS.exists(roomName).roles,
         start: "Start",
         back: "Back"
       });
@@ -167,11 +234,29 @@ io.sockets.on('connection', function (client) {
     updateLobby();
   });
 
+  client.on('toogled-role', function (data) {
+    var roles = data.roles;
+    var roomName = data.roomName;
+    
+    // Update room roles
+    var room = ROOMS.exists(roomName);
+    room.roles = roles;
+
+    // Update clients in room
+    updateRoom(roomName);
+  });
+
   client.on('start-game-request', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
     var rolesInTheMiddleNumber = 3;
 
+    // Get selected roles
+    var selectedRoles = [];
+    roles.forEach(function (role) {
+      if (role.clicked)
+        selectedRoles.push(role);
+    });
     // Check if there is a valid number of players
     var room = ROOMS.exists(roomName);
     var roomPlayersNumber = room.players.toList().length;
@@ -183,14 +268,48 @@ io.sockets.on('connection', function (client) {
     }
 
     // Check if selected roles number is equal to players in room number
-    if (roomPlayersNumber + rolesInTheMiddleNumber != roles.length) {
+    if (roomPlayersNumber + rolesInTheMiddleNumber != selectedRoles.length) {
       client.emit('start-game-declined', {
         errorMessage: "Incomatible number of roles and players"
       });
       return;
     }
 
-    // TODO: START GAME
+    // Get players from room
+    var players = room.players.toList().map(function (player) {
+      return {
+        username: player.username
+      }
+    });
+
+    var positions = players.map(function (player, ind) {
+      return POSITIONS[ind];
+    });
+
+    // Add fake user for center cards
+    for (var i = 1; i <= rolesInTheMiddleNumber; i++) {
+      players.push({
+        username: 'c' + i
+      });
+      positions.push(POSITIONS[10 + i - 1]);
+    }
+
+    // Send clients to start a game
+    room.players.toList().forEach(function (player) {
+      // Compile room page
+      var page = pug.compileFile('./views/game.pug')({
+        playersList: players
+      });
+
+      // Send client data
+      player.emit('start-game', {
+        page: page,
+        positions: positions
+      });
+    });
+
+    // Delete room
+    ROOMS.delete(roomName);
   });
 
   client.on('back-to-lobby', function (data) {
