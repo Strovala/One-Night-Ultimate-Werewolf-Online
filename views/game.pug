@@ -1,8 +1,16 @@
 extends template.pug
 block content
-  #content(style='width: 100%;')
+  #content(style='width: 100%; position: relative')
     - var players= playersList
     each player in players
-      .player-div(onclick='playerClicked(this);')
-        p#player-username(style='color: white; font-size: 1vw;')= player.username
+      - var top = player.top
+      - var left = player.left
+      - var divAttributes = {}
+      - divAttributes.style = 'top: ' + top + 'vh; left: ' + left + 'vw; position: absolute;'
+      - var username = player.username
+      - var dontDisplay = username == 'c1' || username == 'c2' || username == 'c3' || username == 'c4' 
+      - var usernameAttributes = {}
+      - if (dontDisplay) usernameAttributes.style = 'display: none;'
+      .player-div(onclick='playerClicked(this);')&attributes(divAttributes)
+        p#player-username(style='color: white; font-size: 1vw;')&attributes(usernameAttributes)= username
         img#card-back.card-back-image(src="../assets/images/card-back.png", alt="Player")

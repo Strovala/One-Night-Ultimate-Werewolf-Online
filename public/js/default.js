@@ -2,24 +2,8 @@ var $start = $('#start');
 var $username = $('#username');
 var $errorMessage = $('.errorMessage');
 
-function onGameStart(positions) {
-  debugger;
-
-  var $playerDivs = $(".player-div");
-  $($playerDivs[0]).parent().css({position: 'relative'});
-
-  for (var i = 0; i < $playerDivs.length; i++) {
-    var pos = positions[i];
-    var playerDiv = $($playerDivs[i]);
-    playerDiv.css({'top': pos.top + 'vh'});
-    playerDiv.css({'left': pos.left + 'vw'});
-    playerDiv.css({'position':'absolute'});
-
-    var $username = playerDiv.find('#player-username');
-    var username = $username.text();
-    if (username == 'c1' || username == 'c2' || username == 'c3' || username == 'c4')
-      $username.css('display', 'none');
-  }
+function onGameStart() {
+  
 }
 
 function onRoomStart() {
@@ -70,8 +54,8 @@ function onRoomStart() {
     });
     $('#content').html(content);
     // Prepare width for game page
-    $('#content').css('width', '100%')
-    onGameStart(data.positions);
+    $('#content').css('width', '100%');
+    onGameStart();
   });
 }
 
