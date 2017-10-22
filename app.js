@@ -30,6 +30,12 @@ app.get('/', function (req, res) {
   });
 });
 
+
+app.get('/game', function (req, res) {
+  res.render('game', {
+  });
+});
+
 var Players = function () {}
 
 Players.prototype.exists = function Players_exists(username) {
