@@ -11,15 +11,6 @@ function onRoomStart() {
       roomName: $roomName.text()
     });
   });
-
-  socket.on('back-to-lobby-approved', function (data) {
-    var page = $(data.page);
-    var content = $.grep(page, function(e) {
-      return e.id == 'content';
-    });
-    $('#content').html(content);
-    onLobyStart();
-  });
 }
 
 // Function called when lobby is ready to load
@@ -62,29 +53,11 @@ function onLobyStart() {
   });
 
   socket.on('new-room-aproved', function(data) {
+    debugger;
     var roomName = data.roomName;
     socket.emit('enter-room', {
-      admin: true,
       roomName: roomName
     });
-  });
-
-  socket.on('new-room-created', function (data) {
-    var page = $(data.page);
-    var content = $.grep(page, function(e) {
-      return e.id == 'content';
-    });
-    $('#content').html(content);
-    onLobyStart();
-  });
-
-  socket.on('enter-room-aproved', function (data) {
-    var page = $(data.page);
-    var content = $.grep(page, function(e) {
-      return e.id == 'content';
-    });
-    $('#content').html(content);
-    onRoomStart();
   });
 }
 
@@ -105,14 +78,22 @@ $username.keyup(function(event) {
 
 var socket = io.connect('http://localhost:3000');
 
-socket.on('login-aproved', function(data) {
-  socket.id = data.id;
+socket.on('update-lobby', function (data) {
   var page = $(data.page);
   var content = $.grep(page, function(e) {
     return e.id == 'content';
   });
   $('#content').html(content);
   onLobyStart();
+});
+
+socket.on('update-room', function (data) {
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  onRoomStart();
 });
 
 socket.on('login-declined', function(data) {
@@ -124,8 +105,6 @@ function enterRoom(room) {
   room = $(room);
   var roomName = $(room.find('#roomName')).text();
   socket.emit('enter-room', {
-    admin: false,
     roomName: roomName
   });
-  onRoomStart();
 }

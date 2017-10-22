@@ -83,6 +83,67 @@ ROOMS.toList = function ROOMS_toList() {
   return values;
 }
 
+function updateLobby() {
+  // Create rooms list data to send
+  var rooms = ROOMS.toList().map(function (room) {
+    return {
+      name: room.name,
+      players: room.players.toList().length
+    }
+  });
+
+  // Update to players in room that you are not there anymore
+  PLAYERS.toList().forEach(function (player) {
+    if (player.inLobby) {
+      // Compile lobby page
+      var page = pug.compileFile('./views/lobby.pug')({
+        title: "One Night Ultimate Werewolf",
+        roomName: "Room name",
+        cancel: "Cancel",
+        rooms: rooms,
+        username: player.username,
+        roomsText: "Rooms available",
+        create: "Create"
+      });
+      // Send client data
+      player.emit('update-lobby', {
+        page: page
+      });
+    }
+  });
+}
+
+function updateRoom(roomName) {
+  // Create players list from this room
+  var players = [];
+  PLAYERS.toList().forEach(function (player) {
+    if (!player.inLobby && player.roomName == roomName) {
+      players.push({
+        username: player.username
+      });
+    }
+  });
+
+  // Send update to all clients who are in lobby
+  PLAYERS.toList().forEach(function (player) {
+    if (!player.inLobby && player.roomName == roomName) {
+      // Compile room page
+      var page = pug.compileFile('./views/room.pug')({
+        title: "One Night Ultimate Werewolf",
+        players: players,
+        roomName: roomName,
+        start: "Start",
+        back: "Back"
+      });
+
+      // Send client data
+      player.emit('update-room', {
+        page: page
+      });
+    }
+  });
+}
+
 io.sockets.on('connection', function (client) {
   console.log('New connection : ' + client.id);
 
@@ -116,178 +177,31 @@ io.sockets.on('connection', function (client) {
     // Update that player is in lobby again
     client.inLobby = true;
 
-    // Create rooms list data to send
-    var rooms = ROOMS.toList().map(function (room) {
-      return {
-        name: room.name,
-        players: room.players.toList().length
-      }
-    });
-
-    // Compile lobby page
-    var page = pug.compileFile('./views/lobby.pug')({
-      title: "One Night Ultimate Werewolf",
-      roomName: "Room name",
-      cancel: "Cancel",
-      rooms: rooms,
-      username: client.username,
-      roomsText: "Rooms available",
-      create: "Create"
-    });
-    // Send client data
-    client.emit('back-to-lobby-approved', {
-      page: page
-    });
-
-    // Create rooms list data to send
-    var rooms = ROOMS.toList().map(function (room) {
-      return {
-        name: room.name,
-        players: room.players.toList().length
-      };
-    });
-
-    // Create players list from this room
-    var players = [];
-    PLAYERS.toList().forEach(function (player) {
-      if (!player.inLobby && player.roomName == roomName) {
-        players.push({
-          username: player.username
-        });
-      }
-    });
-
-    // Send update to all clients who are in lobby
-    PLAYERS.toList().forEach(function (player) {
-      if (player.inLobby) {
-        // Compile lobby page
-        var page = pug.compileFile('./views/lobby.pug')({
-          title: "One Night Ultimate Werewolf",
-          roomName: "Room name",
-          cancel: "Cancel",
-          rooms: rooms,
-          username: player.username,
-          roomsText: "Rooms available",
-          create: "Create"
-        });
-        // Send client data
-        player.emit('new-room-created', {
-          page: page
-        });
-      }
-      // Theese players are in the game or in the room
-      else {
-        if (player.roomName == roomName) {
-          // Compile room page
-          var page = pug.compileFile('./views/room.pug')({
-            title: "One Night Ultimate Werewolf",
-            players: players,
-            roomName: roomName,
-            start: "Start",
-            back: "Back"
-          });
-
-          // Send client data
-          player.emit('enter-room-aproved', {
-            page: page
-          });
-        }
-      }
-    });
-
-    // Update to players in room that you are not there anymore
-    PLAYERS.toList().forEach(function (player) {
-      if (player.inLobby) {
-        // Compile lobby page
-        var page = pug.compileFile('./views/lobby.pug')({
-          title: "One Night Ultimate Werewolf",
-          roomName: "Room name",
-          cancel: "Cancel",
-          rooms: rooms,
-          username: player.username,
-          roomsText: "Rooms available",
-          create: "Create"
-        });
-        // Send client data
-        player.emit('new-room-created', {
-          page: page
-        });
-      }
-    });
+    updateLobby();
+    updateRoom(roomName);
   });
 
   client.on('enter-room', function (data) {
-    var admin = data.admin;
     var roomName = data.roomName;
+    // Because client.admin may be undefined, not only false
+    if (!client.admin)
+      client.admin = false;
+
+    console.log('Player with username ' + client.username +  ' admin: ' + client.admin + ' request to enter a room with name ' + roomName);
 
     // Update client room info
-    client.admin = admin;
     client.roomName = roomName;
 
     // Update room players if this is not admin
     // We already updated players for him when he created room
     var room = ROOMS.exists(roomName);
-    if (!admin)
-      room.players.add(client.username, client);
+    room.players.add(client.username, client);
 
     // Update that player isn't in lobby anymore
     client.inLobby = false;
 
-    // Create rooms list data to send
-    var rooms = ROOMS.toList().map(function (room) {
-      return {
-        name: room.name,
-        players: room.players.toList().length
-      }
-    });
-
-    // Create players list from this room
-    var players = [];
-    PLAYERS.toList().forEach(function (player) {
-      if (!player.inLobby && player.roomName == roomName) {
-        players.push({
-          username: player.username
-        });
-      }
-    });
-
-    // Send update to all clients who are in lobby
-    PLAYERS.toList().forEach(function (player) {
-      if (player.inLobby) {
-        // Compile lobby page
-        var page = pug.compileFile('./views/lobby.pug')({
-          title: "One Night Ultimate Werewolf",
-          roomName: "Room name",
-          cancel: "Cancel",
-          rooms: rooms,
-          username: player.username,
-          roomsText: "Rooms available",
-          create: "Create"
-        });
-        // Send client data
-        player.emit('new-room-created', {
-          page: page
-        });
-      }
-      // Theese players are in the game or in the room
-      else {
-        if (player.roomName == roomName) {
-          // Compile room page
-          var page = pug.compileFile('./views/room.pug')({
-            title: "One Night Ultimate Werewolf",
-            players: players,
-            roomName: roomName,
-            start: "Start",
-            back: "Back"
-          });
-
-          // Send client data
-          player.emit('enter-room-aproved', {
-            page: page
-          });
-        }
-      }
-    });
+    updateLobby();
+    updateRoom(roomName);
   });
 
   client.on('new-room-request', function (data) {
@@ -313,43 +227,15 @@ io.sockets.on('connection', function (client) {
     ROOMS.add(roomName);
     console.log('Added new room with name ' + roomName);
 
-    // Update that player isn't in lobby anymore
+
+    // Update that player is admin
+    client.admin = true;
     client.inLobby = false;
     client.emit('new-room-aproved', {
       roomName: roomName
     });
 
-    // Update room players number
-    var room = ROOMS.exists(roomName);
-    room.players.add(client.username, client);
-
-    // Create rooms list data to send
-    var rooms = ROOMS.toList().map(function (room) {
-      return {
-        name: room.name,
-        players: room.players.toList().length
-      }
-    });
-
-    // Send update to all clients who are in lobby
-    PLAYERS.toList().forEach(function (player) {
-      if (player.inLobby) {
-        // Compile lobby page
-        var page = pug.compileFile('./views/lobby.pug')({
-          title: "One Night Ultimate Werewolf",
-          roomName: "Room name",
-          cancel: "Cancel",
-          rooms: rooms,
-          username: player.username,
-          roomsText: "Rooms available",
-          create: "Create"
-        });
-        // Send client data
-        player.emit('new-room-created', {
-          page: page
-        });
-      }
-    });
+    updateLobby();
   });
 
   client.on('login-request', function (data) {
@@ -375,29 +261,6 @@ io.sockets.on('connection', function (client) {
     PLAYERS.add(username, client);
     console.log('Added new player with username ' + username);
 
-    // Create rooms list data to send
-    var rooms = ROOMS.toList().map(function (room) {
-      return {
-        name: room.name,
-        players: room.players.toList().length
-      }
-    });
-
-    // Compile lobby page
-    var page = pug.compileFile('./views/lobby.pug')({
-      title: "One Night Ultimate Werewolf",
-      roomName: "Room name",
-      cancel: "Cancel",
-      rooms: rooms,
-      username: username,
-      roomsText: "Rooms available",
-      create: "Create"
-    });
-
-    // Send client data
-    client.emit('login-aproved', {
-      page: page,
-      id: client.id
-    });
+    updateLobby();
   });
 });
