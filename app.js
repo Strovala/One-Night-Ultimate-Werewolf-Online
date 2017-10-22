@@ -81,6 +81,17 @@ app.get('/game', function (req, res) {
 });
 
 
+ROLES = [
+  { id: 'doppelganger', clicked: false }, { id: 'werewolf',     clicked: false },
+  { id: 'werewolf',     clicked: false }, { id: 'minion',       clicked: false },
+  { id: 'mason',        clicked: false }, { id: 'mason',        clicked: false },
+  { id: 'seer',         clicked: false }, { id: 'robber',       clicked: false },
+  { id: 'troublemaker', clicked: false }, { id: 'villager',     clicked: false },
+  { id: 'villager',     clicked: false }, { id: 'villager',     clicked: false },
+  { id: 'tanner',       clicked: false }, { id: 'insomniac',    clicked: false },
+  { id: 'hunter',       clicked: false }, { id: 'drunk',        clicked: false }
+];
+
 var POSITIONS = [
   { top: 15, left: 33  }, { top: 15, left: 50  }, { top: 15, left: 66  },
   { top: 85, left: 33  }, { top: 85, left: 50  }, { top: 85, left: 66  },
@@ -126,7 +137,8 @@ ROOMS.exists = function ROOMS_exists(roomName) {
 ROOMS.add = function ROOMS_add(roomName) {
   this[roomName] = {
     name: roomName,
-    players: new Players()
+    players: new Players(),
+    roles: ROLES.slice()
   };
 }
 
@@ -192,6 +204,7 @@ function updateRoom(roomName) {
         title: "One Night Ultimate Werewolf",
         players: players,
         roomName: roomName,
+        rolesList: ROOMS.exists(roomName).roles,
         start: "Start",
         back: "Back"
       });
@@ -221,11 +234,29 @@ io.sockets.on('connection', function (client) {
     updateLobby();
   });
 
+  client.on('toogled-role', function (data) {
+    var roles = data.roles;
+    var roomName = data.roomName;
+    
+    // Update room roles
+    var room = ROOMS.exists(roomName);
+    room.roles = roles;
+
+    // Update clients in room
+    updateRoom(roomName);
+  });
+
   client.on('start-game-request', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
     var rolesInTheMiddleNumber = 3;
 
+    // Get selected roles
+    var selectedRoles = [];
+    roles.forEach(function (role) {
+      if (role.clicked)
+        selectedRoles.push(role);
+    });
     // Check if there is a valid number of players
     var room = ROOMS.exists(roomName);
     var roomPlayersNumber = room.players.toList().length;
@@ -237,7 +268,7 @@ io.sockets.on('connection', function (client) {
     }
 
     // Check if selected roles number is equal to players in room number
-    if (roomPlayersNumber + rolesInTheMiddleNumber != roles.length) {
+    if (roomPlayersNumber + rolesInTheMiddleNumber != selectedRoles.length) {
       client.emit('start-game-declined', {
         errorMessage: "Incomatible number of roles and players"
       });

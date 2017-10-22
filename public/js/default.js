@@ -37,18 +37,7 @@ function onRoomStart() {
 
   $startGame.click(function () {
     // Collect selected roles
-    var $roles = $('.role-image');
-    var roles = [];
-    for (var i = 0; i < $roles.length; i++) {
-      var role = $($roles[i]);
-      var roleOpacity = role.css('opacity');
-      var roleId = role.attr('id');
-      if (roleOpacity == 1) {
-        roles.push({
-          id: roleId
-        });
-      }
-    }
+    var roles = getRoles();
     socket.emit('start-game-request', {
       roles: roles,
       roomName: $roomName.text()
@@ -188,6 +177,29 @@ function toogleRoleImage(img) {
     audioToogleOn.play();
   }
   img.css('opacity', newOpacity);
+
+  var roles = getRoles();
+  var roomName = $('#room-name-text').text();
+  debugger;
+  socket.emit('toogled-role', {
+    roles: roles,
+    roomName: roomName
+  });
+}
+
+function getRoles() {
+  var $roles = $('.role-image');
+  var roles = [];
+  for (var i = 0; i < $roles.length; i++) {
+    var role = $($roles[i]);
+    var roleOpacity = role.css('opacity');
+    var roleId = role.attr('id');
+    roles.push({
+      id: roleId,
+      clicked: roleOpacity == 1
+    });
+  }
+  return roles;
 }
 
 function playerClicked(div) {
