@@ -31,6 +31,7 @@ function onLobyStart() {
 
   $openModal.click(function () {
     $modal.css({"display": "block"});
+    $roomName.focus();
   });
 
   $cancel.click(function() {
