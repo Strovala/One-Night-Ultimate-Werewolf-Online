@@ -3,7 +3,22 @@ var $username = $('#username');
 var $errorMessage = $('.errorMessage');
 
 function onGameStart() {
-  
+  socket.emit('see-role');
+
+  socket.on('see-role-aproved', function (data) {
+    var username = data.username;
+    var role = data.role.id;
+
+    socket.username = username;
+
+    var playerDiv = findDiv(username);
+    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+  });
+
+  socket.on('saw-role-aproved', function (data) {
+    var playerDiv = findDiv(socket.username);
+    playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+  });
 }
 
 function onRoomStart() {
@@ -36,7 +51,7 @@ function onRoomStart() {
 
 
   socket.on('start-game', function (data) {
-    debugger;
+    socket.role = data.role;
     var page = $(data.page);
     var content = $.grep(page, function(e) {
       return e.id == 'content';
@@ -187,7 +202,22 @@ function getRoles() {
 }
 
 function playerClicked(div) {
-  console.log('clicked ' + $(div).find('#player-username').text());
+  var clickedUsername = $(div).find('#player-username').text();
+  if (socket.username == clickedUsername) {
+    socket.emit('saw-role');
+  }
+}
+
+function findDiv(username) {
+  var playersDivs = $('.player-div');
+  var playerDiv;
+  for(var i = 0; i < playersDivs.length; i++) {
+    if ($(playersDivs[i]).text() == username) {
+      playerDiv = $(playersDivs[i]);
+      break;
+    }
+  }
+  return playerDiv;
 }
 
 var audioClick = new Audio('../assets/sounds/click.mp3');

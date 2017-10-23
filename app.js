@@ -79,16 +79,30 @@ app.get('/game', function (req, res) {
   });
 });
 
+ROLES = {
+  doppelganger: 'doppelganger',
+  werewolf:     'werewolf',
+  minion:       'minion',
+  mason:        'mason',
+  seer:         'seer',
+  robber:       'robber',
+  troublemaker: 'troublemaker',
+  villager:     'villager',
+  tanner:       'tanner',
+  insomniac:    'insomniac',
+  hunter:       'hunter',
+  drunk:        'drunk'
+}
 
-ROLES = [
-  { id: 'doppelganger', clicked: false }, { id: 'werewolf',     clicked: false },
-  { id: 'werewolf',     clicked: false }, { id: 'minion',       clicked: false },
-  { id: 'mason',        clicked: false }, { id: 'mason',        clicked: false },
-  { id: 'seer',         clicked: false }, { id: 'robber',       clicked: false },
-  { id: 'troublemaker', clicked: false }, { id: 'villager',     clicked: false },
-  { id: 'villager',     clicked: false }, { id: 'villager',     clicked: false },
-  { id: 'tanner',       clicked: false }, { id: 'insomniac',    clicked: false },
-  { id: 'hunter',       clicked: false }, { id: 'drunk',        clicked: false }
+ROLE_TILES = [
+  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf,  clicked: false },
+  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,    clicked: false },
+  { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,     clicked: false },
+  { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,    clicked: false },
+  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.villager,  clicked: false },
+  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager,  clicked: false },
+  { id: ROLES.tanner,       clicked: false }, { id: ROLES.insomniac, clicked: false },
+  { id: ROLES.hunter,       clicked: false }, { id: ROLES.drunk,     clicked: false }
 ];
 
 var POSITIONS = [
@@ -110,7 +124,6 @@ POSITIONS.getPositions = function POSITIONS_getPositions(playersNumber, centerCa
 
   // Creates a set of positions array
   positions = positions.filter(function (value, index, self) {
-    console.log(POSITIONS.indexOf(value));
     return self.indexOf(value) === index;
   });
 
@@ -166,7 +179,8 @@ GAMES.add = function GAMES_add(gameName, roles, centerCardsNumber) {
     name: gameName,
     players: new Players(),
     roles: roles,
-    center: centerCardsNumber
+    center: centerCardsNumber,
+    hasntSeenRole: 0
   };
 }
 
@@ -194,7 +208,7 @@ ROOMS.add = function ROOMS_add(roomName) {
   this[roomName] = {
     name: roomName,
     players: new Players(),
-    roles: ROLES.slice()
+    roles: ROLE_TILES.slice()
   };
 }
 
@@ -290,6 +304,34 @@ io.sockets.on('connection', function (client) {
     updateLobby();
   });
 
+  client.on('saw-role', function (data) {
+    var username = client.username;
+    var gameName = client.gameName;
+
+    // Get the game
+    var game = GAMES.exists(gameName);
+    game.hasntSeenRole--;
+    client.emit('saw-role-aproved');
+    if (game.hasntSeenRole == 0) {
+      // TODO: Start polling roles
+      console.log('START POLING ROLES');
+    }
+  });
+
+  client.on('see-role', function (data) {
+    var username = client.username;
+    var gameName = client.gameName;
+
+    // Get the game
+    var game = GAMES.exists(gameName);
+    var role = game.roles[username];
+
+    client.emit('see-role-aproved', {
+      username: username,
+      role: role
+    });
+  });
+
   client.on('toogled-role', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
@@ -353,11 +395,46 @@ io.sockets.on('connection', function (client) {
       });
     }
 
+    // Array of selected roles to assign
+    var rolesToAssign = selectedRoles.slice();
+
+    // Give roles
+    var rolesMap = {};
+    room.players.toList().forEach(function (player) {
+      // Assign random role to player
+      var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
+      var role = rolesToAssign[randomRoleIndex];
+      rolesMap[player.username] = role;
+
+      // Delete that role from array
+      rolesToAssign.splice(randomRoleIndex, 1);
+    });
+
+    for (var i = 1; i <= rolesInTheMiddleNumber; i++) {
+      // Assign random role to center card
+      var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
+      var role = rolesToAssign[randomRoleIndex];
+      rolesMap['c' + i];
+
+      // Delete that role from array
+      rolesToAssign.splice(randomRoleIndex, 1);
+    }
+
+
     // Add game
-    GAMES.add(roomName, selectedRoles, rolesInTheMiddleNumber);
+    GAMES.add(roomName, rolesMap, rolesInTheMiddleNumber);
 
     // Send clients to start a game
     room.players.toList().forEach(function (player) {
+      // Save that player is in game with name same as room name
+      player.status = LOCATIONS.inGame;
+      player.gameName = roomName;
+
+      // Add player to game
+      GAMES.exists(roomName).players.add(player.username, player);
+      // Update number of players who hasnt seen role
+      GAMES.exists(roomName).hasntSeenRole++;
+
       // Compile room page
       var page = pug.compileFile('./views/game.pug')({
         playersList: players
@@ -365,19 +442,13 @@ io.sockets.on('connection', function (client) {
 
       // Send client data
       player.emit('start-game', {
-        page: page
+        page: page,
       });
-
-      // Save that player is in game with name same as room name
-      player.status = LOCATIONS.inGame;
-      player.gameName = roomName;
-
-      // Add player to game
-      GAMES.exists(roomName).players.add(player.username, player);
     });
 
     // Delete room
     ROOMS.delete(roomName);
+
   });
 
   client.on('back-to-lobby', function (data) {
