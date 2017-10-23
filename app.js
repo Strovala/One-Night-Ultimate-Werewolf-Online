@@ -32,51 +32,48 @@ app.get('/', function (req, res) {
 
 
 app.get('/game', function (req, res) {
+  var positions = POSITIONS.getPositions(5, 3);
   res.render('game', {
     playersList: [
       {
         username: 'Krimina',
-        top: 30,
-        left: 30
+        top: positions[0].top,
+        left: positions[0].left,
       },
       {
-        username: 'Piprina'
+        username: 'Krimina',
+        top: positions[1].top,
+        left: positions[1].left,
       },
       {
-        username: 'Viprina'
+        username: 'Krimina',
+        top: positions[2].top,
+        left: positions[2].left,
       },
       {
-        username: 'Krimina'
+        username: 'Krimina',
+        top: positions[3].top,
+        left: positions[3].left,
       },
       {
-        username: 'Piprina'
+        username: 'Krimina',
+        top: positions[4].top,
+        left: positions[4].left,
       },
       {
-        username: 'Viprina'
+        username: 'c1',
+        top: POSITIONS[10].top,
+        left: POSITIONS[10].left,
       },
       {
-        username: 'Kri'
+        username: 'c2',
+        top: POSITIONS[11].top,
+        left: POSITIONS[11].left,
       },
       {
-        username: '123456789012345'
-      },
-      {
-        username: 'Viprina'
-      },
-      {
-        username: 'Krimina'
-      },
-      {
-        username: 'c1'
-      },
-      {
-        username: 'c2'
-      },
-      {
-        username: 'c3'
-      },
-      {
-        username: 'c4'
+        username: 'c3',
+        top: POSITIONS[12].top,
+        left: POSITIONS[12].left,
       }
     ]
   });
@@ -102,6 +99,29 @@ var POSITIONS = [
   { top: 40, left: 40  }, { top: 40, left: 50  }, { top: 40, left: 60  },
   { top: 60, left: 50  }
 ];
+
+POSITIONS.getPositions = function POSITIONS_getPositions(playersNumber, centerCardsNumber) {
+  var positions = [];
+
+  for (var i = 0; i < playersNumber; i++) {
+    var randomIndex = Math.floor(Math.random()*(POSITIONS.length - 4));
+    positions.push(POSITIONS[randomIndex]);
+  }
+
+  // Creates a set of positions array
+  positions = positions.filter(function (value, index, self) {
+    console.log(POSITIONS.indexOf(value));
+    return self.indexOf(value) === index;
+  });
+
+  // If all positions are unique return that array
+  // Otherwise try again
+  if (positions.length != playersNumber)
+    return POSITIONS.getPositions(playersNumber);
+  else {
+    return positions;
+  }
+}
 
 LOCATIONS = {
   inLobby: 1,
@@ -141,11 +161,12 @@ GAMES.exists = function GAMES_exists(gameName) {
   return this[gameName];
 }
 
-GAMES.add = function GAMES_add(gameName, roles) {
+GAMES.add = function GAMES_add(gameName, roles, centerCardsNumber) {
   this[gameName] = {
     name: gameName,
     players: new Players(),
-    roles: roles
+    roles: roles,
+    center: centerCardsNumber
   };
 }
 
@@ -310,9 +331,11 @@ io.sockets.on('connection', function (client) {
       return;
     }
 
+    var positions = POSITIONS.getPositions(roomPlayersNumber);
+
     // Get players from room
     var players = room.players.toList().map(function (player, ind) {
-      var pos = POSITIONS[ind];
+      var pos = positions[ind];
       return {
         username: player.username,
         top: pos.top,
@@ -322,7 +345,7 @@ io.sockets.on('connection', function (client) {
 
     // Add fake user for center cards
     for (var i = 1; i <= rolesInTheMiddleNumber; i++) {
-      var pos = POSITIONS[10 + i - 1];
+      var pos = POSITIONS[POSITIONS.length - 4 + i - 1];
       players.push({
         username: 'c' + i,
         top: pos.top,
@@ -331,7 +354,7 @@ io.sockets.on('connection', function (client) {
     }
 
     // Add game
-    GAMES.add(roomName, selectedRoles);
+    GAMES.add(roomName, selectedRoles, rolesInTheMiddleNumber);
 
     // Send clients to start a game
     room.players.toList().forEach(function (player) {
