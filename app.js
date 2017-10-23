@@ -87,22 +87,22 @@ ROLES = {
   seer:         'seer',
   robber:       'robber',
   troublemaker: 'troublemaker',
-  villager:     'villager',
-  tanner:       'tanner',
+  drunk:        'drunk',
   insomniac:    'insomniac',
+  villager:     'villager',
   hunter:       'hunter',
-  drunk:        'drunk'
+  tanner:       'tanner'
 }
 
 ROLE_TILES = [
-  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf,  clicked: false },
-  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,    clicked: false },
-  { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,     clicked: false },
-  { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,    clicked: false },
-  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.villager,  clicked: false },
-  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager,  clicked: false },
-  { id: ROLES.tanner,       clicked: false }, { id: ROLES.insomniac, clicked: false },
-  { id: ROLES.hunter,       clicked: false }, { id: ROLES.drunk,     clicked: false }
+  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf, clicked: false },
+  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
+  { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
+  { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
+  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
+  { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
+  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
+  { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
 ];
 
 var POSITIONS = [
@@ -114,7 +114,7 @@ var POSITIONS = [
   { top: 60, left: 50  }
 ];
 
-POSITIONS.getPositions = function POSITIONS_getPositions(playersNumber, centerCardsNumber) {
+POSITIONS.randomPositions = function POSITIONS_randomPositions(playersNumber, centerCardsNumber) {
   var positions = [];
 
   for (var i = 0; i < playersNumber; i++) {
@@ -131,15 +131,18 @@ POSITIONS.getPositions = function POSITIONS_getPositions(playersNumber, centerCa
   // Otherwise try again
   if (positions.length != playersNumber)
     return POSITIONS.getPositions(playersNumber);
-  else {
+  else
     return positions;
-  }
+}
+
+POSITIONS.getPositions = function POSITIONS_getPositions(playersNumber, centerCardsNumber) {
+  return this.randomPositions(playersNumber, centerCardsNumber);
 }
 
 LOCATIONS = {
-  inLobby: 1,
-  inRoom: 2,
-  inGame: 3
+  lobby: 1,
+  room: 2,
+  game: 3
 }
 
 var Players = function () {}
@@ -166,6 +169,165 @@ Players.prototype.toList = function Players_toList() {
   return values;
 }
 
+var Game = function (gameName, roles, centerCardsNumber) {
+  this.name = gameName,
+  this.players = new Players(),
+  this.roles = roles,
+  this.center = centerCardsNumber,
+  this.hasntSeenRole = 0;
+}
+
+Game.prototype.addPlayer = function Game_addPlayer(username, player) {
+  this.players.add(username, player);
+  this.hasntSeenRole++;
+};
+
+Game.prototype.sawRole = function Game_sawRole() {
+  this.hasntSeenRole--;
+};
+
+Game.prototype.allSeenRoles = function Game_allSeenRoles() {
+  return this.hasntSeenRole <= 0;
+};
+
+Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
+  return this.roles[username];
+};
+
+Game.prototype.start = function Game_start(room) {
+  var players = room.getPlayersPositions();
+
+  // Send clients to start a game
+  var that = this;
+  room.players.toList().forEach(function (player) {
+    // Save that player is in game with name same as room name
+    player.status = LOCATIONS.inGame;
+    player.gameName = room.name;
+
+    // Add player to game
+    that.addPlayer(player.username, player);
+
+    sendGamePage(player, players);
+  });
+};
+
+var Room = function (roomName) {
+  this.name = roomName,
+  this.players = new Players(),
+  this.roles = ROLE_TILES.slice()
+}
+
+Room.prototype.addPlayer = function Room_addPlayer(username, player) {
+  this.players.add(username, player);
+};
+
+Room.prototype.setRoles = function Room_setRoles(roles) {
+  this.roles = roles;
+};
+
+Room.prototype.playersNumber = function Room_playersNumber() {
+  return this.players.toList().length;
+};
+
+Room.prototype.validPlayersNumber = function Room_validPlayersNumber() {
+  var roomPlayersNumber = this.playersNumber();
+  return roomPlayersNumber >= 3 && roomPlayersNumber <= 10;
+};
+
+Room.prototype.validRolesNumber = function Room_validRolesNumber() {
+  var roomPlayersNumber = this.playersNumber();
+  return roomPlayersNumber + this.centerCardsNumber == this.selectedRoles;
+};
+
+Room.prototype.setCenterCardsNumber = function Room_setCenterCardsNumber(centerCardsNumber) {
+  this.centerCardsNumber = centerCardsNumber;
+};
+
+Room.prototype.setSelectedRoles = function Room_setSelectedRoles(selectedRoles) {
+  this.selectedRoles = selectedRoles;
+};
+
+Room.prototype.getPlayersPositions = function Room_getPlayersPositions() {
+
+  var positions = POSITIONS.getPositions(this.playersNumber());
+
+  // Get players from room
+  var players = this.players.toList().map(function (player, ind) {
+    var pos = positions[ind];
+    return {
+      username: player.username,
+      top: pos.top,
+      left: pos.left
+    }
+  });
+
+  // Add fake user for center cards
+  for (var i = 1; i <= this.centerCardsNumber; i++) {
+    var pos = POSITIONS[POSITIONS.length - 4 + i - 1];
+    players.push({
+      username: 'c' + i,
+      top: pos.top,
+      left: pos.left
+    });
+  }
+
+  return players;
+
+};
+
+Room.prototype.getRolesMap = function Room_getRolesMap() {
+
+  // Array of selected roles to assign
+  var rolesToAssign = this.selectedRoles.slice();
+
+  // Give roles
+  var rolesMap = {};
+  this.players.toList().forEach(function (player) {
+    // Assign random role to player
+    var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
+    var role = rolesToAssign[randomRoleIndex];
+    rolesMap[player.username] = role;
+
+    // Delete that role from array
+    rolesToAssign.splice(randomRoleIndex, 1);
+  });
+
+  for (var i = 1; i <= this.centerCardsNumber; i++) {
+    // Assign random role to center card
+    var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
+    var role = rolesToAssign[randomRoleIndex];
+    rolesMap['c' + i];
+
+    // Delete that role from array
+    rolesToAssign.splice(randomRoleIndex, 1);
+  }
+
+  return rolesMap;
+
+};
+
+Room.prototype.deletePlayer = function Room_deletePlayer(username) {
+  this.players.delete(username);
+};
+
+Room.prototype.isEmpty = function Room_isEmpty() {
+  return this.players.toList().length == 0;
+};
+
+Room.prototype.getPlayerByIndex = function Room_getPlayerByIndex(index) {
+  return this.players.toList()[index];
+};
+
+Room.prototype.updateAdmin = function Room_updateAdmin(client) {
+  if (client.isAdmin()) {
+    if (!this.isEmpty()) {
+      // Set admin to first player in the room
+      this.getPlayerByIndex(0).setAdmin();
+    }
+    client.removeAdmin();
+  }
+};
+
 var PLAYERS = new Players();
 
 var GAMES = {};
@@ -174,14 +336,8 @@ GAMES.exists = function GAMES_exists(gameName) {
   return this[gameName];
 }
 
-GAMES.add = function GAMES_add(gameName, roles, centerCardsNumber) {
-  this[gameName] = {
-    name: gameName,
-    players: new Players(),
-    roles: roles,
-    center: centerCardsNumber,
-    hasntSeenRole: 0
-  };
+GAMES.add = function GAMES_add(room) {
+  this[room.name] = new Game(room.name, room.getRolesMap(), room.centerCardsNumber);
 }
 
 GAMES.delete = function GAMES_delete(gameName) {
@@ -205,11 +361,7 @@ ROOMS.exists = function ROOMS_exists(roomName) {
 }
 
 ROOMS.add = function ROOMS_add(roomName) {
-  this[roomName] = {
-    name: roomName,
-    players: new Players(),
-    roles: ROLE_TILES.slice()
-  };
+  this[roomName] = new Room(roomName);
 }
 
 ROOMS.delete = function ROOMS_delete(roomName) {
@@ -225,6 +377,36 @@ ROOMS.toList = function ROOMS_toList() {
   return values;
 }
 
+function getSelectedRoles(roles) {
+  var selectedRoles = [];
+  roles.forEach(function (role) {
+    if (role.clicked)
+      selectedRoles.push(role);
+  });
+  return selectedRoles;
+}
+
+function getCenterCardsNumber(roles) {
+  return roles.indexOf(ROLES.alphaWolf) < 0 ? 3 : 4;
+}
+
+function sendLobbyPage(player, rooms) {
+  // Compile lobby page
+  var page = pug.compileFile('./views/lobby.pug')({
+    title: "One Night Ultimate Werewolf",
+    roomName: "Room name",
+    cancel: "Cancel",
+    rooms: rooms,
+    username: player.username,
+    roomsText: "Rooms available",
+    create: "Create"
+  });
+  // Send client data
+  player.emit('update-lobby', {
+    page: page
+  });
+}
+
 function updateLobby() {
   // Create rooms list data to send
   var rooms = ROOMS.toList().map(function (room) {
@@ -236,22 +418,26 @@ function updateLobby() {
 
   // Update to players in room that you are not there anymore
   PLAYERS.toList().forEach(function (player) {
-    if (player.status == LOCATIONS.inLobby) {
-      // Compile lobby page
-      var page = pug.compileFile('./views/lobby.pug')({
-        title: "One Night Ultimate Werewolf",
-        roomName: "Room name",
-        cancel: "Cancel",
-        rooms: rooms,
-        username: player.username,
-        roomsText: "Rooms available",
-        create: "Create"
-      });
-      // Send client data
-      player.emit('update-lobby', {
-        page: page
-      });
+    if (player.isIn(LOCATIONS.lobby)) {
+      sendLobbyPage(player, rooms);
     }
+  });
+}
+
+function sendRoomPage(player, players) {
+  // Compile room page
+  var page = pug.compileFile('./views/room.pug')({
+    title: "One Night Ultimate Werewolf",
+    players: players,
+    roomName: player.roomName,
+    rolesList: ROOMS.exists(player.roomName).roles,
+    start: "Start",
+    back: "Back"
+  });
+
+  // Send client data
+  player.emit('update-room', {
+    page: page
   });
 }
 
@@ -259,7 +445,7 @@ function updateRoom(roomName) {
   // Create players list from this room
   var players = [];
   PLAYERS.toList().forEach(function (player) {
-    if (player.status == LOCATIONS.inRoom && player.roomName == roomName) {
+    if (player.isIn(LOCATIONS.room) && player.inRoom(roomName)) {
       players.push({
         username: player.username
       });
@@ -268,27 +454,68 @@ function updateRoom(roomName) {
 
   // Send update to all clients who are in lobby
   PLAYERS.toList().forEach(function (player) {
-    if (player.status == LOCATIONS.inRoom && player.roomName == roomName) {
-      // Compile room page
-      var page = pug.compileFile('./views/room.pug')({
-        title: "One Night Ultimate Werewolf",
-        players: players,
-        roomName: roomName,
-        rolesList: ROOMS.exists(roomName).roles,
-        start: "Start",
-        back: "Back"
-      });
-
-      // Send client data
-      player.emit('update-room', {
-        page: page
-      });
+    if (player.isIn(LOCATIONS.room) && player.inRoom(roomName)) {
+      sendRoomPage(player, players)
     }
+  });
+}
+
+function sendGamePage(player, players) {
+  // Compile room page
+  var page = pug.compileFile('./views/game.pug')({
+    playersList: players
+  });
+
+  // Send client data
+  player.emit('start-game', {
+    page: page,
+  });
+}
+
+function sendError(client, event, message) {
+  client.emit(event, {
+    errorMessage: message
   });
 }
 
 io.sockets.on('connection', function (client) {
   console.log('New connection : ' + client.id);
+
+  client.isIn = function (location) {
+    return this.status == location;
+  }
+
+  client.goTo = function (location) {
+    this.status = location;
+  }
+
+  client.inRoom = function (roomName) {
+    return this.roomName == roomName;
+  }
+
+  client.enterRoom = function (roomName) {
+    this.roomName = roomName;
+  }
+
+  client.inGame = function (gameName) {
+    return this.gameName == gameName;
+  }
+
+  client.enterGame = function (gameName) {
+    this.gameName = gameName;
+  }
+
+  client.removeAdmin = function () {
+    this.admin = false;
+  }
+
+  client.setAdmin = function () {
+    this.admin = true;
+  }
+
+  client.isAdmin = function () {
+    return this.admin;
+  }
 
   client.on('disconnect', function () {
     PLAYERS.delete(client.username);
@@ -298,10 +525,12 @@ io.sockets.on('connection', function (client) {
     // Update room where player maybe was
     var room = ROOMS.exists(client.roomName);
     if (room) {
-      room.players.delete(client.username);
+      room.deletePlayer(client.username);
       updateRoom(room.name);
     }
     updateLobby();
+
+    // TODO: Update game that player maybe was
   });
 
   client.on('saw-role', function (data) {
@@ -310,9 +539,9 @@ io.sockets.on('connection', function (client) {
 
     // Get the game
     var game = GAMES.exists(gameName);
-    game.hasntSeenRole--;
+    game.sawRole();
     client.emit('saw-role-aproved');
-    if (game.hasntSeenRole == 0) {
+    if (game.allSeenRoles()) {
       // TODO: Start polling roles
       console.log('START POLING ROLES');
     }
@@ -324,7 +553,7 @@ io.sockets.on('connection', function (client) {
 
     // Get the game
     var game = GAMES.exists(gameName);
-    var role = game.roles[username];
+    var role = game.getPlayerRole(username);
 
     client.emit('see-role-aproved', {
       username: username,
@@ -338,7 +567,7 @@ io.sockets.on('connection', function (client) {
 
     // Update room roles
     var room = ROOMS.exists(roomName);
-    room.roles = roles;
+    room.setRoles(roles);
 
     // Update clients in room
     updateRoom(roomName);
@@ -347,108 +576,34 @@ io.sockets.on('connection', function (client) {
   client.on('start-game-request', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
-    var rolesInTheMiddleNumber = 3;
+    var centerCardsNumber = getCenterCardsNumber(roles);
 
-    // Get selected roles
-    var selectedRoles = [];
-    roles.forEach(function (role) {
-      if (role.clicked)
-        selectedRoles.push(role);
-    });
     // Check if there is a valid number of players
     var room = ROOMS.exists(roomName);
-    var roomPlayersNumber = room.players.toList().length;
-    if (roomPlayersNumber < 3 || roomPlayersNumber > 10) {
-      client.emit('start-game-declined', {
-        errorMessage: "Number of players must be from 3 to 10"
-      });
+    room.setCenterCardsNumber(centerCardsNumber);
+
+    // Get selected roles
+    var selectedRoles = getSelectedRoles(roles);
+    room.setSelectedRoles(selectedRoles);
+
+    if (!room.validPlayersNumber()) {
+      sendError(client, 'start-game-declined', "Number of players must be from 3 to 10");
       return;
     }
 
-    // Check if selected roles number is equal to players in room number
-    if (roomPlayersNumber + rolesInTheMiddleNumber != selectedRoles.length) {
-      client.emit('start-game-declined', {
-        errorMessage: "Incomatible number of roles and players"
-      });
+    if (room.validRolesNumber()) {
+      sendError(client, 'start-game-declined', "Incomatible number of roles and players");
       return;
     }
-
-    var positions = POSITIONS.getPositions(roomPlayersNumber);
-
-    // Get players from room
-    var players = room.players.toList().map(function (player, ind) {
-      var pos = positions[ind];
-      return {
-        username: player.username,
-        top: pos.top,
-        left: pos.left
-      }
-    });
-
-    // Add fake user for center cards
-    for (var i = 1; i <= rolesInTheMiddleNumber; i++) {
-      var pos = POSITIONS[POSITIONS.length - 4 + i - 1];
-      players.push({
-        username: 'c' + i,
-        top: pos.top,
-        left: pos.left
-      });
-    }
-
-    // Array of selected roles to assign
-    var rolesToAssign = selectedRoles.slice();
-
-    // Give roles
-    var rolesMap = {};
-    room.players.toList().forEach(function (player) {
-      // Assign random role to player
-      var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
-      var role = rolesToAssign[randomRoleIndex];
-      rolesMap[player.username] = role;
-
-      // Delete that role from array
-      rolesToAssign.splice(randomRoleIndex, 1);
-    });
-
-    for (var i = 1; i <= rolesInTheMiddleNumber; i++) {
-      // Assign random role to center card
-      var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
-      var role = rolesToAssign[randomRoleIndex];
-      rolesMap['c' + i];
-
-      // Delete that role from array
-      rolesToAssign.splice(randomRoleIndex, 1);
-    }
-
 
     // Add game
-    GAMES.add(roomName, rolesMap, rolesInTheMiddleNumber);
+    GAMES.add(room);
 
-    // Send clients to start a game
-    room.players.toList().forEach(function (player) {
-      // Save that player is in game with name same as room name
-      player.status = LOCATIONS.inGame;
-      player.gameName = roomName;
-
-      // Add player to game
-      GAMES.exists(roomName).players.add(player.username, player);
-      // Update number of players who hasnt seen role
-      GAMES.exists(roomName).hasntSeenRole++;
-
-      // Compile room page
-      var page = pug.compileFile('./views/game.pug')({
-        playersList: players
-      });
-
-      // Send client data
-      player.emit('start-game', {
-        page: page,
-      });
-    });
+    // Start game
+    GAMES.exists(roomName).start(room);
 
     // Delete room
     ROOMS.delete(roomName);
-
   });
 
   client.on('back-to-lobby', function (data) {
@@ -456,24 +611,18 @@ io.sockets.on('connection', function (client) {
 
     // Update players in room
     var room = ROOMS.exists(roomName);
-    room.players.delete(client.username);
+    room.deletePlayer(client.username);
 
     // If no players left in room delete it
-    if (room.players.toList().length == 0) {
+    if (room.isEmpty()) {
       ROOMS.delete(room.name);
     }
 
     // If admin left the room give it to someone else (first from list)
-    if (client.admin) {
-      if (room.players.toList().length != 0) {
-        var newAdmin = room.players.toList()[0];
-        newAdmin.admin = true;
-      }
-      client.admin = false;
-    }
+    room.updateAdmin(client);
 
     // Update that player is in lobby again
-    client.status = LOCATIONS.inLobby;
+    client.goTo(LOCATIONS.lobby);
 
     updateLobby();
     updateRoom(roomName);
@@ -482,54 +631,50 @@ io.sockets.on('connection', function (client) {
   client.on('enter-room', function (data) {
     var roomName = data.roomName;
     // Because client.admin may be undefined, not only false
-    if (!client.admin)
-      client.admin = false;
+    if (!client.isAdmin())
+      client.removeAdmin();
 
     console.log('Player with username ' + client.username +  ' admin: ' + client.admin + ' request to enter a room with name ' + roomName);
 
     // Update client room info
-    client.roomName = roomName;
+    client.enterRoom(roomName);
 
     // Update that player isn't in lobby anymore
-    client.status = LOCATIONS.inRoom;
+    client.goTo(LOCATIONS.room);
 
     // Update room players if this is not admin
     // We already updated players for him when he created room
     var room = ROOMS.exists(roomName);
-    room.players.add(client.username, client);
+    room.addPlayer(client.username, client);
 
     updateLobby();
     updateRoom(roomName);
   });
 
   client.on('new-room-request', function (data) {
+
     console.log(client.id + ' requested creation of a room with name ' + data.roomName);
     var roomName = data.roomName || '';
     // Check if room name is valid
     roomName = roomName.toLowerCase();
     // If someone sent us a postman-like request, because on client we checked this
     if (roomName.length < 3 || roomName.length > 15) {
-      client.emit('new-room-declined', {
-        errorMessage: 'Room name must contain 3 to 15 characters'
-      });
+      sendError(client, 'new-room-declined', 'Room name must contain 3 to 15 characters');
       return;
     }
     if (ROOMS.exists(roomName)) {
-      client.emit('new-room-declined', {
-        errorMessage: 'Room name taken'
-      });
+      sendError(client, 'new-room-declined', 'Room name taken');
       return;
     }
 
     // Add room to rooms list
     ROOMS.add(roomName);
+
     console.log('Added new room with name ' + roomName);
 
-
     // Update that player is admin
-    client.admin = true;
-    // Error
-    // client.inLobby = false;
+    client.setAdmin();
+
     client.emit('new-room-aproved', {
       roomName: roomName
     });
@@ -538,26 +683,24 @@ io.sockets.on('connection', function (client) {
   });
 
   client.on('login-request', function (data) {
+
     console.log(client.id + ' requested login with username ' + data.username);
     var username = data.username || '';
     // Check is username valid
     username = username.toLowerCase();
     // If someone sent us a postman-like request, because on client we checked this
     if (username.length < 3 || username.length > 15) {
-        client.emit('login-declined', {
-          errorMessage: 'Username must contain 3 to 15 characters'
-        });
-        return;
+      sendError(client, 'login-declined', 'Username must contain 3 to 15 characters');
+      return;
     }
     if (PLAYERS.exists(username)) {
-      client.emit('login-declined', {
-        errorMessage: 'Username taken'
-      });
+      sendError(client, 'login-declined', 'Username taken');
       return;
     }
 
     // Add client to players logged in
-    client.status = LOCATIONS.inLobby;
+    client.goTo(LOCATIONS.lobby);
+
     PLAYERS.add(username, client);
     console.log('Added new player with username ' + username);
 
