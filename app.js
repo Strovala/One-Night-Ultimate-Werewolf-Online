@@ -36,47 +36,33 @@ app.get('/game', function (req, res) {
     playersList: [
       {
         username: 'Krimina',
-        top: 30,
-        left: 30
+        top: POSITIONS[0].top,
+        left: POSITIONS[0].left,
       },
       {
-        username: 'Piprina'
+        username: 'Krimina',
+        top: POSITIONS[1].top,
+        left: POSITIONS[1].left,
       },
       {
-        username: 'Viprina'
+        username: 'Krimina',
+        top: POSITIONS[2].top,
+        left: POSITIONS[2].left,
       },
       {
-        username: 'Krimina'
+        username: 'c1',
+        top: POSITIONS[10].top,
+        left: POSITIONS[10].left,
       },
       {
-        username: 'Piprina'
+        username: 'c2',
+        top: POSITIONS[11].top,
+        left: POSITIONS[11].left,
       },
       {
-        username: 'Viprina'
-      },
-      {
-        username: 'Kri'
-      },
-      {
-        username: '123456789012345'
-      },
-      {
-        username: 'Viprina'
-      },
-      {
-        username: 'Krimina'
-      },
-      {
-        username: 'c1'
-      },
-      {
-        username: 'c2'
-      },
-      {
-        username: 'c3'
-      },
-      {
-        username: 'c4'
+        username: 'c3',
+        top: POSITIONS[12].top,
+        left: POSITIONS[12].left,
       }
     ]
   });
@@ -239,7 +225,7 @@ io.sockets.on('connection', function (client) {
   client.on('toogled-role', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
-    
+
     // Update room roles
     var room = ROOMS.exists(roomName);
     room.roles = roles;
