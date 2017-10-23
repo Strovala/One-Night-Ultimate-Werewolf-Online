@@ -103,6 +103,12 @@ var POSITIONS = [
   { top: 60, left: 50  }
 ];
 
+LOCATIONS = {
+  inLobby: 1,
+  inRoom: 2,
+  inGame: 3
+}
+
 var Players = function () {}
 
 Players.prototype.exists = function Players_exists(username) {
@@ -111,7 +117,6 @@ Players.prototype.exists = function Players_exists(username) {
 
 Players.prototype.add = function Players_add(username, client) {
   client.username = username;
-  client.inLobby = true;
   this[username] = client;
 }
 
@@ -129,6 +134,34 @@ Players.prototype.toList = function Players_toList() {
 }
 
 var PLAYERS = new Players();
+
+var GAMES = {};
+
+GAMES.exists = function GAMES_exists(gameName) {
+  return this[gameName];
+}
+
+GAMES.add = function GAMES_add(gameName, roles) {
+  this[gameName] = {
+    name: gameName,
+    players: new Players(),
+    roles: roles
+  };
+}
+
+GAMES.delete = function GAMES_delete(gameName) {
+  delete this[gameName];
+}
+
+GAMES.toList = function GAMES_toList() {
+  var values = [];
+  for(var key in this) {
+    if (this.hasOwnProperty(key) && typeof this[key] != 'function')
+      values.push(this[key]);
+  }
+  return values;
+}
+
 
 var ROOMS = {};
 
@@ -168,7 +201,7 @@ function updateLobby() {
 
   // Update to players in room that you are not there anymore
   PLAYERS.toList().forEach(function (player) {
-    if (player.inLobby) {
+    if (player.status == LOCATIONS.inLobby) {
       // Compile lobby page
       var page = pug.compileFile('./views/lobby.pug')({
         title: "One Night Ultimate Werewolf",
@@ -191,7 +224,7 @@ function updateRoom(roomName) {
   // Create players list from this room
   var players = [];
   PLAYERS.toList().forEach(function (player) {
-    if (!player.inLobby && player.roomName == roomName) {
+    if (player.status == LOCATIONS.inRoom && player.roomName == roomName) {
       players.push({
         username: player.username
       });
@@ -200,7 +233,7 @@ function updateRoom(roomName) {
 
   // Send update to all clients who are in lobby
   PLAYERS.toList().forEach(function (player) {
-    if (!player.inLobby && player.roomName == roomName) {
+    if (player.status == LOCATIONS.inRoom && player.roomName == roomName) {
       // Compile room page
       var page = pug.compileFile('./views/room.pug')({
         title: "One Night Ultimate Werewolf",
@@ -239,7 +272,7 @@ io.sockets.on('connection', function (client) {
   client.on('toogled-role', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
-    
+
     // Update room roles
     var room = ROOMS.exists(roomName);
     room.roles = roles;
@@ -297,6 +330,9 @@ io.sockets.on('connection', function (client) {
       });
     }
 
+    // Add game
+    GAMES.add(roomName, selectedRoles);
+
     // Send clients to start a game
     room.players.toList().forEach(function (player) {
       // Compile room page
@@ -308,6 +344,13 @@ io.sockets.on('connection', function (client) {
       player.emit('start-game', {
         page: page
       });
+
+      // Save that player is in game with name same as room name
+      player.status = LOCATIONS.inGame;
+      player.gameName = roomName;
+
+      // Add player to game
+      GAMES.exists(roomName).players.add(player.username, player);
     });
 
     // Delete room
@@ -336,7 +379,7 @@ io.sockets.on('connection', function (client) {
     }
 
     // Update that player is in lobby again
-    client.inLobby = true;
+    client.status = LOCATIONS.inLobby;
 
     updateLobby();
     updateRoom(roomName);
@@ -353,13 +396,13 @@ io.sockets.on('connection', function (client) {
     // Update client room info
     client.roomName = roomName;
 
+    // Update that player isn't in lobby anymore
+    client.status = LOCATIONS.inRoom;
+
     // Update room players if this is not admin
     // We already updated players for him when he created room
     var room = ROOMS.exists(roomName);
     room.players.add(client.username, client);
-
-    // Update that player isn't in lobby anymore
-    client.inLobby = false;
 
     updateLobby();
     updateRoom(roomName);
@@ -391,7 +434,8 @@ io.sockets.on('connection', function (client) {
 
     // Update that player is admin
     client.admin = true;
-    client.inLobby = false;
+    // Error
+    // client.inLobby = false;
     client.emit('new-room-aproved', {
       roomName: roomName
     });
@@ -419,6 +463,7 @@ io.sockets.on('connection', function (client) {
     }
 
     // Add client to players logged in
+    client.status = LOCATIONS.inLobby;
     PLAYERS.add(username, client);
     console.log('Added new player with username ' + username);
 
