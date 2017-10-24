@@ -145,6 +145,12 @@ LOCATIONS = {
   game: 3
 }
 
+STATES = {
+  doNothing: 0,
+  roleView: 1,
+  werewolfAction: 2
+}
+
 var Players = function () {}
 
 Players.prototype.exists = function Players_exists(username) {
@@ -177,6 +183,10 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.hasntSeenRole = 0;
 }
 
+Game.prototype.getPlayers = function Game_getPlayers() {
+  return this.players.toList();
+};
+
 Game.prototype.addPlayer = function Game_addPlayer(username, player) {
   this.players.add(username, player);
   this.hasntSeenRole++;
@@ -187,7 +197,7 @@ Game.prototype.sawRole = function Game_sawRole() {
 };
 
 Game.prototype.allSeenRoles = function Game_allSeenRoles() {
-  return this.hasntSeenRole <= 0;
+  return this.hasntSeenRole == 0;
 };
 
 Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
@@ -199,16 +209,54 @@ Game.prototype.start = function Game_start(room) {
 
   // Send clients to start a game
   var that = this;
-  room.players.toList().forEach(function (player) {
+  room.getPlayers().forEach(function (player) {
     // Save that player is in game with name same as room name
     player.status = LOCATIONS.inGame;
     player.gameName = room.name;
 
     // Add player to game
     that.addPlayer(player.username, player);
+    player.goTo(LOCATIONS.game);
 
-    sendGamePage(player, players);
+    sendGamePage(player, players, STATES.roleView);
   });
+};
+
+Game.prototype.getPlayersWithRole = function Game_getPlayersWithRole(role) {
+  var players = [];
+  for(var username in this.roles) {
+    if (this.roles.hasOwnProperty(username)) {
+      if (this.players[username] && this.roles[username] == role) {
+        players.push(this.players[username]);
+      }
+    }
+  }
+  return players;
+};
+
+// Returns true if there is only one werewolf
+Game.prototype.pollWerewolf = function Game_pollWerewolf() {
+  var players = this.getPlayersWithRole(ROLES.werewolf);
+  var playersUsernames = players.map(function (player) {
+    return player.username;
+  });
+  var state = playersUsernames.length < 2 ? STATES.werewolfAction : STATES.doNothing;
+  players.forEach(function (player) {
+    player.emit('werewolf-poll', {
+      role: ROLES.werewolf,
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+  return playersUsernames.length < 2;
+};
+
+Game.prototype.startPolling = function Game_startPolling() {
+  var one = this.pollWerewolf();
+  var that = this;
+  setTimeout(function () {
+    that.pollWerewolf();
+  }, 10000);
 };
 
 var Room = function (roomName) {
@@ -216,6 +264,10 @@ var Room = function (roomName) {
   this.players = new Players(),
   this.roles = ROLE_TILES.slice()
 }
+
+Room.prototype.getPlayers = function Room_getPlayers() {
+  return this.players.toList();
+};
 
 Room.prototype.addPlayer = function Room_addPlayer(username, player) {
   this.players.add(username, player);
@@ -225,17 +277,17 @@ Room.prototype.setRoles = function Room_setRoles(roles) {
   this.roles = roles;
 };
 
-Room.prototype.playersNumber = function Room_playersNumber() {
+Room.prototype.getPlayersNumber = function Room_getPlayersNumber() {
   return this.players.toList().length;
 };
 
 Room.prototype.validPlayersNumber = function Room_validPlayersNumber() {
-  var roomPlayersNumber = this.playersNumber();
+  var roomPlayersNumber = this.getPlayersNumber();
   return roomPlayersNumber >= 3 && roomPlayersNumber <= 10;
 };
 
 Room.prototype.validRolesNumber = function Room_validRolesNumber() {
-  var roomPlayersNumber = this.playersNumber();
+  var roomPlayersNumber = this.getPlayersNumber();
   return roomPlayersNumber + this.centerCardsNumber == this.selectedRoles;
 };
 
@@ -249,10 +301,10 @@ Room.prototype.setSelectedRoles = function Room_setSelectedRoles(selectedRoles) 
 
 Room.prototype.getPlayersPositions = function Room_getPlayersPositions() {
 
-  var positions = POSITIONS.getPositions(this.playersNumber());
+  var positions = POSITIONS.getPositions(this.getPlayersNumber());
 
   // Get players from room
-  var players = this.players.toList().map(function (player, ind) {
+  var players = this.getPlayers().map(function (player, ind) {
     var pos = positions[ind];
     return {
       username: player.username,
@@ -282,11 +334,12 @@ Room.prototype.getRolesMap = function Room_getRolesMap() {
 
   // Give roles
   var rolesMap = {};
-  this.players.toList().forEach(function (player) {
+  this.getPlayers().forEach(function (player) {
     // Assign random role to player
     var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
     var role = rolesToAssign[randomRoleIndex];
-    rolesMap[player.username] = role;
+    rolesMap[player.username] = role.id;
+    console.log('Assigned role ' + role.id + ' to player ' + player.username);
 
     // Delete that role from array
     rolesToAssign.splice(randomRoleIndex, 1);
@@ -296,7 +349,8 @@ Room.prototype.getRolesMap = function Room_getRolesMap() {
     // Assign random role to center card
     var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
     var role = rolesToAssign[randomRoleIndex];
-    rolesMap['c' + i];
+    rolesMap['c' + i] = role.id;
+    console.log('Assigned role ' + role.id + ' to player c' + i);
 
     // Delete that role from array
     rolesToAssign.splice(randomRoleIndex, 1);
@@ -311,18 +365,14 @@ Room.prototype.deletePlayer = function Room_deletePlayer(username) {
 };
 
 Room.prototype.isEmpty = function Room_isEmpty() {
-  return this.players.toList().length == 0;
-};
-
-Room.prototype.getPlayerByIndex = function Room_getPlayerByIndex(index) {
-  return this.players.toList()[index];
+  return this.getPlayersNumber() == 0;
 };
 
 Room.prototype.updateAdmin = function Room_updateAdmin(client) {
   if (client.isAdmin()) {
     if (!this.isEmpty()) {
       // Set admin to first player in the room
-      this.getPlayerByIndex(0).setAdmin();
+      this.getPlayers(0).setAdmin();
     }
     client.removeAdmin();
   }
@@ -412,7 +462,7 @@ function updateLobby() {
   var rooms = ROOMS.toList().map(function (room) {
     return {
       name: room.name,
-      players: room.players.toList().length
+      players: room.getPlayersNumber()
     }
   });
 
@@ -460,7 +510,7 @@ function updateRoom(roomName) {
   });
 }
 
-function sendGamePage(player, players) {
+function sendGamePage(player, players, state) {
   // Compile room page
   var page = pug.compileFile('./views/game.pug')({
     playersList: players
@@ -469,6 +519,7 @@ function sendGamePage(player, players) {
   // Send client data
   player.emit('start-game', {
     page: page,
+    state: state
   });
 }
 
@@ -528,9 +579,16 @@ io.sockets.on('connection', function (client) {
       room.deletePlayer(client.username);
       updateRoom(room.name);
     }
-    updateLobby();
 
-    // TODO: Update game that player maybe was
+    var game = GAMES.exists(client.gameName);
+    if (game) {
+        game.getPlayers().forEach(function (player) {
+          player.goTo(LOCATIONS.lobby);
+        });
+        GAMES.delete(game.name);
+    }
+
+    updateLobby();
   });
 
   client.on('saw-role', function (data) {
@@ -542,8 +600,7 @@ io.sockets.on('connection', function (client) {
     game.sawRole();
     client.emit('saw-role-aproved');
     if (game.allSeenRoles()) {
-      // TODO: Start polling roles
-      console.log('START POLING ROLES');
+      game.startPolling();
     }
   });
 

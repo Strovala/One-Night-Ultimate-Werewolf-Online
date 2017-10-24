@@ -1,15 +1,24 @@
+STATES = {
+  doNothing: 0,
+  roleView: 1,
+  werewolfPoll: 2
+}
+
 var $start = $('#start');
 var $username = $('#username');
 var $errorMessage = $('.errorMessage');
+
+var gameState;
 
 function onGameStart() {
   socket.emit('see-role');
 
   socket.on('see-role-aproved', function (data) {
     var username = data.username;
-    var role = data.role.id;
+    var role = data.role;
 
     socket.username = username;
+    socket.role = role;
 
     var playerDiv = findDiv(username);
     playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
@@ -18,6 +27,22 @@ function onGameStart() {
   socket.on('saw-role-aproved', function (data) {
     var playerDiv = findDiv(socket.username);
     playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+  });
+
+  socket.on('werewolf-poll', function (data) {
+    gameState = data.state;
+    var pollRole = data.role;
+    var usernames = data.usernames;
+
+    usernames.forEach(function (username) {
+      var playerDiv = findDiv(username);
+      playerDiv.css('border-bottom', '5px solid white');
+
+      setTimeout(function stopReveal() {
+        playerDiv.css('border-bottom', '0');
+      }, 5000);
+    });
+
   });
 }
 
@@ -51,7 +76,7 @@ function onRoomStart() {
 
 
   socket.on('start-game', function (data) {
-    socket.role = data.role;
+    gameState = data.state;
     var page = $(data.page);
     var content = $.grep(page, function(e) {
       return e.id == 'content';
@@ -130,7 +155,7 @@ $username.keyup(function(event) {
   }
 });
 
-// var socket = io.connect('http://365264ba.ngrok.io');
+// var socket = io.connect('http://852a0a5d.ngrok.io');
 var socket = io.connect('http://localhost:3000');
 
 socket.on('update-lobby', function (data) {
@@ -202,9 +227,14 @@ function getRoles() {
 }
 
 function playerClicked(div) {
+  if (gameState == STATES.doNothing)
+    return;
   var clickedUsername = $(div).find('#player-username').text();
-  if (socket.username == clickedUsername) {
-    socket.emit('saw-role');
+  if (gameState == STATES.roleView) {
+    if (socket.username == clickedUsername) {
+      socket.emit('saw-role');
+      gameState = STATES.doNothing;
+    }
   }
 }
 
