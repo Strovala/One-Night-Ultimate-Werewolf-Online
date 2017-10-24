@@ -279,19 +279,21 @@ Game.prototype.pollSeer = function Game_pollSeer() {
   });
 };
 
-Game.prototype.startPolling = function Game_startPolling() {
-  this.pollIdle();
-  this.pollWerewolf();
-  var that = this;
+function pollAll(pollRoles, ind, self) {
+  if (ind >= pollRoles.length) {
+    pollRoles[0]();
+    return;
+  }
+  pollRoles[0]();
+  pollRoles[ind]();
   setTimeout(function () {
-    that.pollIdle();
-    that.pollSeer();
-    setTimeout(function () {
-      console.log('End of polling seer');
-      that.pollIdle();
-      console.log('Start polling robber');
-    }, 10000);
+    pollAll(pollRoles, ind+1, self);
   }, 10000);
+}
+
+Game.prototype.startPolling = function Game_startPolling() {
+  var pollRoles = [this.pollIdle.bind(this), this.pollWerewolf.bind(this), this.pollSeer.bind(this)];
+  pollAll(pollRoles, 1, this);
 };
 
 var Room = function (roomName) {
