@@ -30,65 +30,6 @@ app.get('/', function (req, res) {
   });
 });
 
-
-app.get('/game', function (req, res) {
-  var positions = POSITIONS.getPositions(5, 3);
-  res.render('game', {
-    reveal: 'Reveal',
-    buttonPos: {
-      top: 80,
-      left: 5
-    },
-    playersList: [
-      {
-        username: 'Krimina',
-        top: positions[0].top,
-        left: positions[0].left,
-      },
-      {
-        username: 'Krimina',
-        top: positions[1].top,
-        left: positions[1].left,
-      },
-      {
-        username: 'Krimina',
-        top: positions[2].top,
-        left: positions[2].left,
-      },
-      {
-        username: 'Krimina',
-        top: positions[3].top,
-        left: positions[3].left,
-      },
-      {
-        username: 'Krimina',
-        top: positions[4].top,
-        left: positions[4].left,
-      },
-      {
-        username: 'c1',
-        top: POSITIONS[10].top,
-        left: POSITIONS[10].left,
-      },
-      {
-        username: 'c2',
-        top: POSITIONS[11].top,
-        left: POSITIONS[11].left,
-      },
-      {
-        username: 'c3',
-        top: POSITIONS[12].top,
-        left: POSITIONS[12].left,
-      },
-      {
-        username: 'c4',
-        top: POSITIONS[13].top,
-        left: POSITIONS[13].left,
-      }
-    ]
-  });
-});
-
 var ROLES = {
   doppelganger: 'doppelganger',
   werewolf:     'werewolf',
