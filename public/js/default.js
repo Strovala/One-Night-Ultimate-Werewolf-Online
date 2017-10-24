@@ -1,7 +1,7 @@
 STATES = {
   doNothing: 0,
   roleView: 1,
-  werewolfPoll: 2
+  werewolfAction: 2
 }
 
 var $start = $('#start');
@@ -37,12 +37,20 @@ function onGameStart() {
     usernames.forEach(function (username) {
       var playerDiv = findDiv(username);
       playerDiv.css('border-bottom', '5px solid white');
-
-      setTimeout(function stopReveal() {
-        playerDiv.css('border-bottom', '0');
-      }, 5000);
     });
 
+  });
+
+  socket.on('idle-poll', function (data) {
+    gameState = data.state;
+    var pollRole = data.role;
+    var usernames = data.usernames;
+
+    usernames.forEach(function (username) {
+      var playerDiv = findDiv(username);
+      playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+      playerDiv.css('border-bottom', '0');
+    });
   });
 }
 

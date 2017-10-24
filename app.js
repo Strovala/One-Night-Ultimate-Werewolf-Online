@@ -234,12 +234,20 @@ Game.prototype.getPlayersWithRole = function Game_getPlayersWithRole(role) {
   return players;
 };
 
+Game.prototype.pollIdle = function Game_pollIdle() {
+  var playersUsernames = getPlayersUsernames(this.getPlayers());
+  this.getPlayers().forEach(function (player) {
+    player.emit('idle-poll', {
+      usernames: playersUsernames,
+      state: STATES.doNothing
+    });
+  });
+};
+
 // Returns true if there is only one werewolf
 Game.prototype.pollWerewolf = function Game_pollWerewolf() {
   var players = this.getPlayersWithRole(ROLES.werewolf);
-  var playersUsernames = players.map(function (player) {
-    return player.username;
-  });
+  var playersUsernames = getPlayersUsernames(players);
   var state = playersUsernames.length < 2 ? STATES.werewolfAction : STATES.doNothing;
   players.forEach(function (player) {
     player.emit('werewolf-poll', {
@@ -248,14 +256,13 @@ Game.prototype.pollWerewolf = function Game_pollWerewolf() {
       state: state
     });
   });
-  return playersUsernames.length < 2;
 };
 
 Game.prototype.startPolling = function Game_startPolling() {
-  var one = this.pollWerewolf();
+  this.pollWerewolf();
   var that = this;
   setTimeout(function () {
-    that.pollWerewolf();
+    that.pollIdle();
   }, 10000);
 };
 
@@ -288,7 +295,7 @@ Room.prototype.validPlayersNumber = function Room_validPlayersNumber() {
 
 Room.prototype.validRolesNumber = function Room_validRolesNumber() {
   var roomPlayersNumber = this.getPlayersNumber();
-  return roomPlayersNumber + this.centerCardsNumber == this.selectedRoles;
+  return roomPlayersNumber + this.centerCardsNumber == this.selectedRoles.length;
 };
 
 Room.prototype.setCenterCardsNumber = function Room_setCenterCardsNumber(centerCardsNumber) {
@@ -402,7 +409,6 @@ GAMES.toList = function GAMES_toList() {
   }
   return values;
 }
-
 
 var ROOMS = {};
 
@@ -529,6 +535,12 @@ function sendError(client, event, message) {
   });
 }
 
+function getPlayersUsernames(players) {
+  return players.map(function (player) {
+    return player.username;
+  });
+};
+
 io.sockets.on('connection', function (client) {
   console.log('New connection : ' + client.id);
 
@@ -644,11 +656,13 @@ io.sockets.on('connection', function (client) {
     room.setSelectedRoles(selectedRoles);
 
     if (!room.validPlayersNumber()) {
+      console.log('Declined entering room ' + roomName + ' not valid number of players');
       sendError(client, 'start-game-declined', "Number of players must be from 3 to 10");
       return;
     }
 
-    if (room.validRolesNumber()) {
+    if (!room.validRolesNumber()) {
+      console.log('Declined entering room ' + roomName + ' not valid number of players and roles');
       sendError(client, 'start-game-declined', "Incomatible number of roles and players");
       return;
     }
