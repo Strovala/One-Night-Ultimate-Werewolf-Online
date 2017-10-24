@@ -34,6 +34,11 @@ app.get('/', function (req, res) {
 app.get('/game', function (req, res) {
   var positions = POSITIONS.getPositions(5, 3);
   res.render('game', {
+    reveal: 'Reveal',
+    buttonPos: {
+      top: 80,
+      left: 5
+    },
     playersList: [
       {
         username: 'Krimina',
@@ -74,12 +79,17 @@ app.get('/game', function (req, res) {
         username: 'c3',
         top: POSITIONS[12].top,
         left: POSITIONS[12].left,
+      },
+      {
+        username: 'c4',
+        top: POSITIONS[13].top,
+        left: POSITIONS[13].left,
       }
     ]
   });
 });
 
-ROLES = {
+var ROLES = {
   doppelganger: 'doppelganger',
   werewolf:     'werewolf',
   minion:       'minion',
@@ -94,15 +104,24 @@ ROLES = {
   tanner:       'tanner'
 }
 
-ROLE_TILES = [
-  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf, clicked: false },
-  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
-  { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
+// ROLE_TILES = [
+//   { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf, clicked: false },
+//   { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
+//   { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
+//   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
+//   { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
+//   { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
+//   { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
+//   { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
+// ];
+
+var ROLE_TILES = [
+  { id: ROLES.werewolf, clicked: false },
+  { id: ROLES.werewolf,     clicked: false },
   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
   { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
-  { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
-  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
-  { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
+  { id: ROLES.villager, clicked: false },
+  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false }
 ];
 
 var POSITIONS = [
@@ -113,6 +132,11 @@ var POSITIONS = [
   { top: 40, left: 40  }, { top: 40, left: 50  }, { top: 40, left: 60  },
   { top: 60, left: 50  }
 ];
+
+var REVEAL_BUTTON_POSITION = {
+  top: 80,
+  left: 5
+};
 
 POSITIONS.randomPositions = function POSITIONS_randomPositions(playersNumber, centerCardsNumber) {
   var positions = [];
@@ -139,18 +163,31 @@ POSITIONS.getPositions = function POSITIONS_getPositions(playersNumber, centerCa
   return this.randomPositions(playersNumber, centerCardsNumber);
 }
 
-LOCATIONS = {
+var LOCATIONS = {
   lobby: 1,
   room: 2,
   game: 3
 }
 
-STATES = {
+var STATES = {
   doNothing: 0,
   roleView: 1,
   werewolfAction: 2,
   seerActionOne: 3,
-  seerActionTwo: 4
+  seerActionTwo: 4,
+  robberAction: 5,
+  troublemakerActionPick: 6,
+  troublemakerActionSwitch : 7,
+  drunkAction: 8,
+  discussion: 9
+}
+
+function clone(obj) {
+  copy = {};
+  for (var attr in obj) {
+     if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+  }
+  return copy;
 }
 
 var Players = function () {}
@@ -178,10 +215,11 @@ Players.prototype.toList = function Players_toList() {
 }
 
 var Game = function (gameName, roles, centerCardsNumber) {
-  this.name = gameName,
-  this.players = new Players(),
-  this.roles = roles,
-  this.center = centerCardsNumber,
+  this.name = gameName;
+  this.players = new Players();
+  this.roles = roles;
+  this.endRoles = clone(roles);
+  this.center = centerCardsNumber;
   this.hasntSeenRole = 0;
 }
 
@@ -246,6 +284,19 @@ Game.prototype.getAllUsernames = function Game_getAllUsernames() {
   return players;
 };
 
+Game.prototype.getEndRoles = function Game_getEndRoles() {
+  var players = [];
+  for(var username in this.endRoles) {
+    if (this.endRoles.hasOwnProperty(username)) {
+      players.push({
+        username: username,
+        role: this.endRoles[username]
+      });
+    }
+  }
+  return players;
+};
+
 Game.prototype.pollIdle = function Game_pollIdle() {
   var allUsernames = this.getAllUsernames();
   this.getPlayers().forEach(function (player) {
@@ -279,31 +330,96 @@ Game.prototype.pollSeer = function Game_pollSeer() {
   });
 };
 
-function pollAll(pollRoles, ind) {
-  if (ind >= pollRoles.length) {
-    pollRoles[0]();
-    return;
-  }
-  pollRoles[0]();
-  pollRoles[ind]();
-  setTimeout(function () {
-    pollAll(pollRoles, ind+1);
-  }, 10000);
-}
+Game.prototype.pollRobber = function Game_pollRobber() {
+  var players = this.getPlayersWithRole(ROLES.robber);
+  var playersUsernames = getPlayersUsernames(players);
+  players.forEach(function (player) {
+    player.emit('robber-poll', {
+      usernames: playersUsernames,
+      state: STATES.robberAction,
+      robberAction: 5
+    });
+  });
+};
+
+Game.prototype.robberAction = function Game_robberAction(robberUsername, stolenUsername) {
+  var stolenRole = this.endRoles[stolenUsername];
+  this.endRoles[stolenUsername] = this.endRoles[robberUsername];
+  this.endRoles[robberUsername] = stolenRole;
+};
+
+Game.prototype.pollTroublemaker = function Game_pollTroublemaker() {
+  var players = this.getPlayersWithRole(ROLES.troublemaker);
+  var playersUsernames = getPlayersUsernames(players);
+  players.forEach(function (player) {
+    player.emit('troublemaker-poll', {
+      usernames: playersUsernames,
+      state: STATES.troublemakerActionPick
+    });
+  });
+};
+
+Game.prototype.troublemakerAction = function Game_troublemakerAction(usernamePick, usernameSwitch) {
+  var switchedRole = this.endRoles[usernamePick];
+  this.endRoles[usernamePick] = this.endRoles[usernameSwitch];
+  this.endRoles[usernameSwitch] = switchedRole;
+};
+
+Game.prototype.pollDrunk = function Game_pollDrunk() {
+  var players = this.getPlayersWithRole(ROLES.drunk);
+  var playersUsernames = getPlayersUsernames(players);
+  players.forEach(function (player) {
+    player.emit('drunk-poll', {
+      usernames: playersUsernames,
+      state: STATES.drunkAction
+    });
+  });
+};
+
+Game.prototype.drunkAction = function Game_drunkAction(drunkUsername, stolenUsername) {
+  var stolenRole = this.endRoles[stolenUsername];
+  this.endRoles[stolenUsername] = this.endRoles[drunkUsername];
+  this.endRoles[drunkUsername] = stolenRole;
+};
 
 Game.prototype.startPolling = function Game_startPolling() {
   var pollRoles = [
     this.pollIdle.bind(this),
     this.pollWerewolf.bind(this),
-    this.pollSeer.bind(this)
+    this.pollSeer.bind(this),
+    this.pollRobber.bind(this),
+    this.pollTroublemaker.bind(this),
+    this.pollDrunk.bind(this)
   ];
-  pollAll(pollRoles, 1);
+  var that = this;
+  pollAll(pollRoles, 1, function () {
+    that.startDiscussion();
+    console.log('Discussion started');
+  });
+};
+
+Game.prototype.startDiscussion = function Game_startDiscussion() {
+  this.getPlayers().forEach(function (player) {
+    player.emit('start-discussion', {
+      state: STATES.discussion
+    });
+  });
+};
+
+Game.prototype.reveal = function Game_reveal() {
+  var endRoles = this.getEndRoles();
+  console.log('End roles ' + endRoles);
+  this.getPlayers().forEach(function (player) {
+    player.emit('reveal-aproved', {
+      players: endRoles
+    });
+  });
 };
 
 var Room = function (roomName) {
-  this.name = roomName,
-  this.players = new Players(),
-  this.roles = ROLE_TILES.slice()
+  this.name = roomName;
+  this.players = new Players();
+  this.roles = ROLE_TILES.slice();
 }
 
 Room.prototype.getPlayers = function Room_getPlayers() {
@@ -467,6 +583,19 @@ ROOMS.toList = function ROOMS_toList() {
   return values;
 }
 
+function pollAll(pollRoles, ind, callback) {
+  if (ind >= pollRoles.length) {
+    pollRoles[0]();
+    callback();
+    return;
+  }
+  pollRoles[0]();
+  pollRoles[ind]();
+  setTimeout(function () {
+    pollAll(pollRoles, ind+1, callback);
+  }, 10000);
+}
+
 function getSelectedRoles(roles) {
   var selectedRoles = [];
   roles.forEach(function (role) {
@@ -553,6 +682,8 @@ function updateRoom(roomName) {
 function sendGamePage(player, players, state) {
   // Compile room page
   var page = pug.compileFile('./views/game.pug')({
+    reveal: 'Reveal',
+    buttonPos: REVEAL_BUTTON_POSITION,
     playersList: players
   });
 
@@ -645,6 +776,55 @@ io.sockets.on('connection', function (client) {
     }
 
     updateLobby();
+  });
+
+  client.on('reveal', function () {
+    console.log('Requested reveal by' + client.username);
+
+    var game = GAMES.exists(client.gameName);
+    game.reveal();
+  });
+
+  client.on('drunk-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Drunk action clicked ' + clickedCard);
+
+    // Switch cards that drunk clicked
+    // because its D R U N K
+    var game = GAMES.exists(client.gameName);
+    game.drunkAction(client.username, clickedCard);
+  });
+
+  client.on('troublemaker-action', function (data) {
+    var usernamePick = data.usernamePick;
+    var usernameSwitch = data.usernameSwitch;
+
+    console.log('Troublemaker action clicked ' + usernamePick + ' and ' + usernameSwitch);
+
+    // Switch cards that troublemaker clicked
+    // because its T R O U B L E M A K E R
+    var game = GAMES.exists(client.gameName);
+    game.troublemakerAction(usernamePick, usernameSwitch);
+  });
+
+  client.on('robber-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Robber action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.gameName);
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('seer-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
+
+    // Switch robber and clicked card roles
+    // because its R O B B E R
+    game.robberAction(client.username, clickedCard);
   });
 
   client.on('seer-action', function (data) {

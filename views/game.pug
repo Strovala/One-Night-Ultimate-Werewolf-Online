@@ -2,6 +2,11 @@ extends template.pug
 block content
   #content(style='width: 100%; position: relative')
     - var players= playersList
+    - var button= buttonPos
+    - var buttonAttributes = {}
+    - buttonAttributes.style = 'top: ' + button.top + 'vh; left: ' + button.left + 'vw; position: absolute; display: none';
+      #div-reveal(style='text-align: left; height: 1.5em;')&attributes(buttonAttributes)
+        button#reveal(type='button')= reveal
     each player in players
       - var top = player.top
       - var left = player.left

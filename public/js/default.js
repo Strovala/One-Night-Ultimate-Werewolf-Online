@@ -1,10 +1,20 @@
-STATES = {
+var HOST = '192.168.0.219';
+var PORT = 3000;
+
+var STATES = {
   doNothing: 0,
   roleView: 1,
   werewolfAction: 2,
   seerActionOne: 3,
-  seerActionTwo: 4
+  seerActionTwo: 4,
+  robberAction: 5,
+  troublemakerActionPick: 6,
+  troublemakerActionSwitch : 7,
+  drunkAction: 8,
+  discussion: 9
 }
+
+var troublemakerPick = '';
 
 var $start = $('#start');
 var $username = $('#username');
@@ -13,6 +23,16 @@ var $errorMessage = $('.errorMessage');
 var gameState;
 
 function onGameStart() {
+  var $reveal = $('#reveal');
+
+  $reveal.click(function () {
+    if (gameState == STATES.discussion) {
+      socket.emit('reveal');
+      audioClick.play();
+      gameState = STATES.doNothing;
+    }
+  });
+
   socket.emit('see-role');
 
   socket.on('see-role-aproved', function (data) {
@@ -69,6 +89,47 @@ function onGameStart() {
     playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
   });
 
+  socket.on('robber-poll', function (data) {
+    gameState = data.state;
+    var usernames = data.usernames;
+
+    usernames.forEach(function (username) {
+      var playerDiv = findDiv(username);
+      playerDiv.css('border-bottom', '5px solid white');
+    });
+
+  });
+
+  socket.on('robber-action-aproved', function (data) {
+    var username = data.username;
+    var role = data.role;
+
+    var playerDiv = findDiv(username);
+    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+  });
+
+  socket.on('troublemaker-poll', function (data) {
+    gameState = data.state;
+    var usernames = data.usernames;
+
+    usernames.forEach(function (username) {
+      var playerDiv = findDiv(username);
+      playerDiv.css('border-bottom', '5px solid white');
+    });
+
+  });
+
+  socket.on('drunk-poll', function (data) {
+    gameState = data.state;
+    var usernames = data.usernames;
+
+    usernames.forEach(function (username) {
+      var playerDiv = findDiv(username);
+      playerDiv.css('border-bottom', '5px solid white');
+    });
+
+  });
+
   socket.on('idle-poll', function (data) {
     gameState = data.state;
     var pollRole = data.role;
@@ -79,6 +140,20 @@ function onGameStart() {
       playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
       playerDiv.css('border-bottom', '0');
     });
+  });
+
+  socket.on('start-discussion', function (data) {
+    gameState = data.state;
+    $('#div-reveal').css('display', 'block');
+  });
+
+  socket.on('reveal-aproved', function (data) {
+    var players = data.players;
+    players.forEach(function (player) {
+      var playerDiv = findDiv(player.username);
+      playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + player.role + '.png');
+    });
+    gameState = STATES.doNothing;
   });
 }
 
@@ -191,8 +266,8 @@ $username.keyup(function(event) {
   }
 });
 
+var socket = io.connect('http://' + HOST + ':' + PORT);
 // var socket = io.connect('http://852a0a5d.ngrok.io');
-var socket = io.connect('http://localhost:3000');
 
 socket.on('update-lobby', function (data) {
   var page = $(data.page);
@@ -223,6 +298,7 @@ function enterRoom(room) {
   socket.emit('enter-room', {
     roomName: roomName
   });
+  audioClick.play();
 }
 
 function toogleRoleImage(img) {
@@ -263,13 +339,16 @@ function getRoles() {
 }
 
 function playerClicked(div) {
-  if (gameState == STATES.doNothing)
+  if (gameState == STATES.doNothing || gameState == STATES.discussion)
     return;
+
   var clickedUsername = $(div).find('#player-username').text();
+  console.log('clicked in ' + gameState + ' ' + clickedUsername);
 
   if (gameState == STATES.roleView) {
-    if (socket.username == clickedUsername) {
+    if (isMyself(clickedUsername)) {
       socket.emit('saw-role');
+      audioClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -280,16 +359,18 @@ function playerClicked(div) {
       socket.emit('werewolf-action', {
         username: clickedUsername
       });
+      audioClick.play();
       gameState = STATES.doNothing;
     }
     return;
   }
 
   if (gameState == STATES.seerActionOne) {
-    if (socket.username != clickedUsername) {
+    if (!isMyself(clickedUsername)) {
       socket.emit('seer-action', {
         username: clickedUsername
       });
+      audioClick.play();
       gameState = isCenterCard(clickedUsername) ? STATES.seerActionTwo : STATES.doNothing;
     }
     return;
@@ -300,6 +381,58 @@ function playerClicked(div) {
       socket.emit('seer-action', {
         username: clickedUsername
       });
+      audioClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.robberAction) {
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
+      socket.emit('robber-action', {
+        username: clickedUsername
+      });
+      audioClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.troublemakerActionPick) {
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
+      troublemakerPick = clickedUsername;
+      playerDiv = findDiv(clickedUsername);
+      playerDiv.css('border-bottom', '5px solid white');
+      gameState = STATES.troublemakerActionSwitch;
+      audioClick.play();
+    }
+    return;
+  }
+
+  if (gameState == STATES.troublemakerActionSwitch) {
+    console.log(clickedUsername);
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername) && troublemakerPick != clickedUsername) {
+      playerDiv = findDiv(clickedUsername);
+      playerDiv.css('border-bottom', '5px solid white');
+      socket.emit('troublemaker-action', {
+        usernamePick: troublemakerPick,
+        usernameSwitch: clickedUsername
+      });
+      audioClick.play();
+      troublemakerPick = '';
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.drunkAction) {
+    playerDiv = findDiv(clickedUsername);
+    playerDiv.css('border-bottom', '5px solid white');
+    if (isCenterCard(clickedUsername)) {
+      socket.emit('drunk-action', {
+        username: clickedUsername
+      });
+      audioClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -318,13 +451,16 @@ function findDiv(username) {
   return playerDiv;
 }
 
-
 function isCenterCard(username) {
   for (var i = 1; i <= 4; i++) {
     if (username == 'c' + i)
       return true;
   }
   return false;
+}
+
+function isMyself(username) {
+  return socket.username == username;
 }
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
