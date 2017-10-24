@@ -277,8 +277,7 @@ Game.prototype.pollRobber = function Game_pollRobber() {
   players.forEach(function (player) {
     player.emit('robber-poll', {
       usernames: playersUsernames,
-      state: STATES.robberAction,
-      robberAction: 5
+      state: STATES.robberAction
     });
   });
 };
@@ -758,7 +757,7 @@ io.sockets.on('connection', function (client) {
     var game = GAMES.exists(client.gameName);
     var role = game.getPlayerRole(clickedCard);
 
-    client.emit('seer-action-aproved', {
+    client.emit('robber-action-aproved', {
       username: clickedCard,
       role: role
     });
