@@ -148,7 +148,9 @@ LOCATIONS = {
 STATES = {
   doNothing: 0,
   roleView: 1,
-  werewolfAction: 2
+  werewolfAction: 2,
+  seerActionOne: 3,
+  seerActionTwo: 4
 }
 
 var Players = function () {}
@@ -234,35 +236,61 @@ Game.prototype.getPlayersWithRole = function Game_getPlayersWithRole(role) {
   return players;
 };
 
+Game.prototype.getAllUsernames = function Game_getAllUsernames() {
+  var players = [];
+  for(var username in this.roles) {
+    if (this.roles.hasOwnProperty(username)) {
+      players.push(username);
+    }
+  }
+  return players;
+};
+
 Game.prototype.pollIdle = function Game_pollIdle() {
-  var playersUsernames = getPlayersUsernames(this.getPlayers());
+  var allUsernames = this.getAllUsernames();
   this.getPlayers().forEach(function (player) {
     player.emit('idle-poll', {
-      usernames: playersUsernames,
+      usernames: allUsernames,
       state: STATES.doNothing
     });
   });
 };
 
-// Returns true if there is only one werewolf
 Game.prototype.pollWerewolf = function Game_pollWerewolf() {
   var players = this.getPlayersWithRole(ROLES.werewolf);
   var playersUsernames = getPlayersUsernames(players);
   var state = playersUsernames.length < 2 ? STATES.werewolfAction : STATES.doNothing;
   players.forEach(function (player) {
     player.emit('werewolf-poll', {
-      role: ROLES.werewolf,
       usernames: playersUsernames,
       state: state
     });
   });
 };
 
+Game.prototype.pollSeer = function Game_pollSeer() {
+  var players = this.getPlayersWithRole(ROLES.seer);
+  var playersUsernames = getPlayersUsernames(players);
+  players.forEach(function (player) {
+    player.emit('seer-poll', {
+      usernames: playersUsernames,
+      state: STATES.seerActionOne
+    });
+  });
+};
+
 Game.prototype.startPolling = function Game_startPolling() {
+  this.pollIdle();
   this.pollWerewolf();
   var that = this;
   setTimeout(function () {
     that.pollIdle();
+    that.pollSeer();
+    setTimeout(function () {
+      console.log('End of polling seer');
+      that.pollIdle();
+      console.log('Start polling robber');
+    }, 10000);
   }, 10000);
 };
 
@@ -541,6 +569,14 @@ function getPlayersUsernames(players) {
   });
 };
 
+function isCenterCard(username) {
+  for (var i = 1; i <= 4; i++) {
+    if (username == 'c' + i)
+      return true;
+  }
+  return false;
+}
+
 io.sockets.on('connection', function (client) {
   console.log('New connection : ' + client.id);
 
@@ -590,6 +626,8 @@ io.sockets.on('connection', function (client) {
     if (room) {
       room.deletePlayer(client.username);
       updateRoom(room.name);
+      if (room.isEmpty())
+        ROOMS.delete(room.name);
     }
 
     var game = GAMES.exists(client.gameName);
@@ -601,6 +639,36 @@ io.sockets.on('connection', function (client) {
     }
 
     updateLobby();
+  });
+
+  client.on('seer-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Seer action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.gameName);
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('seer-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
+  });
+
+  client.on('werewolf-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Werewolf action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.gameName);
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('werewolf-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
   });
 
   client.on('saw-role', function (data) {

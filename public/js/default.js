@@ -1,7 +1,9 @@
 STATES = {
   doNothing: 0,
   roleView: 1,
-  werewolfAction: 2
+  werewolfAction: 2,
+  seerActionOne: 3,
+  seerActionTwo: 4
 }
 
 var $start = $('#start');
@@ -31,7 +33,6 @@ function onGameStart() {
 
   socket.on('werewolf-poll', function (data) {
     gameState = data.state;
-    var pollRole = data.role;
     var usernames = data.usernames;
 
     usernames.forEach(function (username) {
@@ -39,6 +40,33 @@ function onGameStart() {
       playerDiv.css('border-bottom', '5px solid white');
     });
 
+  });
+
+  socket.on('werewolf-action-aproved', function (data) {
+    var username = data.username;
+    var role = data.role;
+
+    var playerDiv = findDiv(username);
+    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+  });
+
+  socket.on('seer-poll', function (data) {
+    gameState = data.state;
+    var usernames = data.usernames;
+
+    usernames.forEach(function (username) {
+      var playerDiv = findDiv(username);
+      playerDiv.css('border-bottom', '5px solid white');
+    });
+
+  });
+
+  socket.on('seer-action-aproved', function (data) {
+    var username = data.username;
+    var role = data.role;
+
+    var playerDiv = findDiv(username);
+    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
   });
 
   socket.on('idle-poll', function (data) {
@@ -238,11 +266,43 @@ function playerClicked(div) {
   if (gameState == STATES.doNothing)
     return;
   var clickedUsername = $(div).find('#player-username').text();
+
   if (gameState == STATES.roleView) {
     if (socket.username == clickedUsername) {
       socket.emit('saw-role');
       gameState = STATES.doNothing;
     }
+    return;
+  }
+
+  if (gameState == STATES.werewolfAction) {
+    if (isCenterCard(clickedUsername)) {
+      socket.emit('werewolf-action', {
+        username: clickedUsername
+      });
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.seerActionOne) {
+    if (socket.username != clickedUsername) {
+      socket.emit('seer-action', {
+        username: clickedUsername
+      });
+      gameState = isCenterCard(clickedUsername) ? STATES.seerActionTwo : STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.seerActionTwo) {
+    if (isCenterCard(clickedUsername)) {
+      socket.emit('seer-action', {
+        username: clickedUsername
+      });
+      gameState = STATES.doNothing;
+    }
+    return;
   }
 }
 
@@ -256,6 +316,15 @@ function findDiv(username) {
     }
   }
   return playerDiv;
+}
+
+
+function isCenterCard(username) {
+  for (var i = 1; i <= 4; i++) {
+    if (username == 'c' + i)
+      return true;
+  }
+  return false;
 }
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
