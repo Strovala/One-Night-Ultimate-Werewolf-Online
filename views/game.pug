@@ -2,6 +2,11 @@ extends template.pug
 block content
   #content(style='width: 100%; position: relative')
     - var players= playersList
+    - var button= buttonPos
+    - var buttonAttributes = {}
+    - buttonAttributes.style = 'top: ' + button.top + 'vh; left: ' + button.left + 'vw; position: absolute; display: none';
+      #div-reveal(style='text-align: left; height: 1.5em;')&attributes(buttonAttributes)
+        button#reveal(type='button')= reveal
     each player in players
       - var top = player.top
       - var left = player.left
@@ -14,4 +19,3 @@ block content
       .player-div(onclick='playerClicked(this);')&attributes(divAttributes)
         p#player-username(style='color: white; font-size: 1vw;')&attributes(usernameAttributes)= username
         img#card-back.card-back-image(src="../assets/images/card-back.png", alt="Player")
-  script(src='/assets/js/default.js')
