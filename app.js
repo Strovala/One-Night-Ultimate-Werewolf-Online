@@ -279,7 +279,7 @@ Game.prototype.pollSeer = function Game_pollSeer() {
   });
 };
 
-function pollAll(pollRoles, ind, self) {
+function pollAll(pollRoles, ind) {
   if (ind >= pollRoles.length) {
     pollRoles[0]();
     return;
@@ -287,13 +287,17 @@ function pollAll(pollRoles, ind, self) {
   pollRoles[0]();
   pollRoles[ind]();
   setTimeout(function () {
-    pollAll(pollRoles, ind+1, self);
+    pollAll(pollRoles, ind+1);
   }, 10000);
 }
 
 Game.prototype.startPolling = function Game_startPolling() {
-  var pollRoles = [this.pollIdle.bind(this), this.pollWerewolf.bind(this), this.pollSeer.bind(this)];
-  pollAll(pollRoles, 1, this);
+  var pollRoles = [
+    this.pollIdle.bind(this),
+    this.pollWerewolf.bind(this),
+    this.pollSeer.bind(this)
+  ];
+  pollAll(pollRoles, 1);
 };
 
 var Room = function (roomName) {
