@@ -348,7 +348,7 @@ function playerClicked(div) {
   if (gameState == STATES.roleView) {
     if (isMyself(clickedUsername)) {
       socket.emit('saw-role');
-      audioClick.play();
+      audioPlayerClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -359,7 +359,7 @@ function playerClicked(div) {
       socket.emit('werewolf-action', {
         username: clickedUsername
       });
-      audioClick.play();
+      audioPlayerClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -370,7 +370,7 @@ function playerClicked(div) {
       socket.emit('seer-action', {
         username: clickedUsername
       });
-      audioClick.play();
+      audioPlayerClick.play();
       gameState = isCenterCard(clickedUsername) ? STATES.seerActionTwo : STATES.doNothing;
     }
     return;
@@ -381,7 +381,7 @@ function playerClicked(div) {
       socket.emit('seer-action', {
         username: clickedUsername
       });
-      audioClick.play();
+      audioPlayerClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -392,7 +392,7 @@ function playerClicked(div) {
       socket.emit('robber-action', {
         username: clickedUsername
       });
-      audioClick.play();
+      audioPlayerClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -404,7 +404,7 @@ function playerClicked(div) {
       playerDiv = findDiv(clickedUsername);
       playerDiv.css('border-bottom', '5px solid white');
       gameState = STATES.troublemakerActionSwitch;
-      audioClick.play();
+      audioPlayerClick.play();
     }
     return;
   }
@@ -418,7 +418,7 @@ function playerClicked(div) {
         usernamePick: troublemakerPick,
         usernameSwitch: clickedUsername
       });
-      audioClick.play();
+      audioPlayerClick.play();
       troublemakerPick = '';
       gameState = STATES.doNothing;
     }
@@ -432,7 +432,7 @@ function playerClicked(div) {
       socket.emit('drunk-action', {
         username: clickedUsername
       });
-      audioClick.play();
+      audioPlayerClick.play();
       gameState = STATES.doNothing;
     }
     return;
@@ -465,4 +465,5 @@ function isMyself(username) {
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
 var audioToogleOn = new Audio('../assets/sounds/toogle-on.mp3');
+var audioPlayerClick = new Audio('../assets/sounds/toogle-on.mp3');
 var audioToogleOff = new Audio('../assets/sounds/toogle-off.mp3');
