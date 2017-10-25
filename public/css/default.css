@@ -10,6 +10,9 @@ body {
   -o-background-size: cover;
   background-size: cover;
 
+  /* Disavle scrolls */
+  overflow: hidden;
+
   font-family: Awesome;
 }
 #content {
@@ -107,4 +110,76 @@ h1, h2, h3, h4, h5, h6 {
 .player-div {
   text-align: center;
   -webkit-transform: translate(-70%, -65%); /* Set pivot to center */
+}
+
+.flip-container {
+	perspective: 1000px;
+}
+
+.flip {
+  transform: rotateY(180deg);
+}
+
+/* flip speed goes here */
+.flipper {
+	transition: 0.6s;
+	transform-style: preserve-3d;
+
+	position: relative;
+}
+
+/* hide back of pane during swap */
+.front, .back {
+	backface-visibility: hidden;
+}
+
+.back {
+  position: absolute;
+  top: 0;
+}
+
+/* front pane, placed above back */
+.front {
+	z-index: 2;
+	/* for firefox 31 */
+	transform: rotateY(0deg);
+}
+
+/* back, initially hidden pane */
+.back {
+	transform: rotateY(-180deg);
+}
+
+@keyframes blink {
+  0% {
+    transform: scale(1);
+    color: white;
+  }
+  50% {
+    transform: scale(2);
+    color: red;
+  }
+  100% {
+    transform: scale(1);
+    color: white;
+}
+}
+.blink {
+  animation: blink normal 2s infinite ease-in-out;
+  transform-origin: center bottom;
+}
+
+@keyframes fade {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+.fade {
+  animation: fade normal 2s infinite ease-in-out;
 }

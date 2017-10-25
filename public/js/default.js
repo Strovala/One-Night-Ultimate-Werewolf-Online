@@ -14,6 +14,17 @@ var STATES = {
   discussion: 9
 }
 
+var FUNCS = {
+  lagan: 'lagan',
+  gas: 'gas'
+}
+
+var EASE = {
+  'gas': '.17,1.33,1,.61',
+  'lagan': '.13,-0.2,.7,1.7'
+}
+
+
 var troublemakerPick = '';
 
 var $start = $('#start');
@@ -33,128 +44,11 @@ function onGameStart() {
     }
   });
 
-  socket.emit('see-role');
+  // See role after 3s
+  setTimeout(function () {
+    socket.emit('see-role');
+  }, 3000);
 
-  socket.on('see-role-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    socket.username = username;
-    socket.role = role;
-
-    var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
-  });
-
-  socket.on('saw-role-aproved', function (data) {
-    var playerDiv = findDiv(socket.username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
-  });
-
-  socket.on('werewolf-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('werewolf-action-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
-  });
-
-  socket.on('seer-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('seer-action-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
-  });
-
-  socket.on('robber-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('robber-action-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
-  });
-
-  socket.on('troublemaker-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('drunk-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('idle-poll', function (data) {
-    gameState = data.state;
-    var pollRole = data.role;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
-      playerDiv.css('border-bottom', '0');
-    });
-  });
-
-  socket.on('start-discussion', function (data) {
-    gameState = data.state;
-    $('#div-reveal').css('display', 'block');
-  });
-
-  socket.on('reveal-aproved', function (data) {
-    var players = data.players;
-    players.forEach(function (player) {
-      var playerDiv = findDiv(player.username);
-      playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + player.role + '.png');
-    });
-    gameState = STATES.doNothing;
-  });
 }
 
 function onRoomStart() {
@@ -178,24 +72,6 @@ function onRoomStart() {
       roomName: $roomName.text()
     });
     audioClick.play();
-  });
-
-  socket.on('start-game-declined', function (data) {
-    var errorMessage = data.errorMessage;
-    $errorMessage.text(errorMessage);
-  });
-
-
-  socket.on('start-game', function (data) {
-    gameState = data.state;
-    var page = $(data.page);
-    var content = $.grep(page, function(e) {
-      return e.id == 'content';
-    });
-    $('#content').html(content);
-    // Prepare width for game page
-    $('#content').css('width', '100%');
-    onGameStart();
   });
 }
 
@@ -237,17 +113,6 @@ function onLobyStart() {
     audioClick.play();
   });
 
-  socket.on('new-room-declined', function(data) {
-    var errorMessage = data.errorMessage;
-    $errorMessage.text(errorMessage);
-  });
-
-  socket.on('new-room-aproved', function(data) {
-    var roomName = data.roomName;
-    socket.emit('enter-room', {
-      roomName: roomName
-    });
-  });
 }
 
 $start.click(function() {
@@ -264,32 +129,6 @@ $username.keyup(function(event) {
   if (event.keyCode == 13) {
       $start.click();
   }
-});
-
-var socket = io.connect('http://' + HOST + ':' + PORT);
-// var socket = io.connect('http://852a0a5d.ngrok.io');
-
-socket.on('update-lobby', function (data) {
-  var page = $(data.page);
-  var content = $.grep(page, function(e) {
-    return e.id == 'content';
-  });
-  $('#content').html(content);
-  onLobyStart();
-});
-
-socket.on('update-room', function (data) {
-  var page = $(data.page);
-  var content = $.grep(page, function(e) {
-    return e.id == 'content';
-  });
-  $('#content').html(content);
-  onRoomStart();
-});
-
-socket.on('login-declined', function(data) {
-  var errorMessage = data.errorMessage;
-  $errorMessage.text(errorMessage);
 });
 
 function enterRoom(room) {
@@ -316,7 +155,6 @@ function toogleRoleImage(img) {
 
   var roles = getRoles();
   var roomName = $('#room-name-text').text();
-  debugger;
   socket.emit('toogled-role', {
     roles: roles,
     roomName: roomName
@@ -402,7 +240,7 @@ function playerClicked(div) {
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
       troublemakerPick = clickedUsername;
       playerDiv = findDiv(clickedUsername);
-      playerDiv.css('border-bottom', '5px solid white');
+      startFadeBlinking(playerDiv);
       gameState = STATES.troublemakerActionSwitch;
       audioPlayerClick.play();
     }
@@ -410,10 +248,11 @@ function playerClicked(div) {
   }
 
   if (gameState == STATES.troublemakerActionSwitch) {
-    console.log(clickedUsername);
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername) && troublemakerPick != clickedUsername) {
       playerDiv = findDiv(clickedUsername);
-      playerDiv.css('border-bottom', '5px solid white');
+      var firstPick = findDiv(troublemakerPick);
+      stopFadeBlinking(firstPick);
+      animationSwitchCards(firstPick, playerDiv);
       socket.emit('troublemaker-action', {
         usernamePick: troublemakerPick,
         usernameSwitch: clickedUsername
@@ -426,9 +265,9 @@ function playerClicked(div) {
   }
 
   if (gameState == STATES.drunkAction) {
-    playerDiv = findDiv(clickedUsername);
-    playerDiv.css('border-bottom', '5px solid white');
     if (isCenterCard(clickedUsername)) {
+      playerDiv = findDiv(clickedUsername);
+      animationSwitchCards(findDiv(socket.username), playerDiv);
       socket.emit('drunk-action', {
         username: clickedUsername
       });
@@ -462,6 +301,347 @@ function isCenterCard(username) {
 function isMyself(username) {
   return socket.username == username;
 }
+
+function revealRole(playerDiv, role) {
+  playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+  playerDiv.find('.flipper').removeClass('flip');
+}
+
+function setRoleToBack(playerDiv, role) {
+  playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+}
+
+function isRoleOnBack(playerDiv) {
+  return playerDiv.find('#card-back').attr('src') != '../assets/images/card-back.png';
+}
+
+function hideRole(playerDiv) {
+  playerDiv.find('.flipper').addClass('flip');
+  setTimeout(function () {
+    playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+  }, 600);
+}
+
+// If wants to flip before this need to call setRoleToBack
+function animationSwitchCards(firstDiv, secondDiv) {
+
+
+  var firstFunc = FUNCS.lagan;
+  var secondFunc = FUNCS.lagan;
+
+  var flipFirst = isRoleOnBack(firstDiv);
+  var flipSecond = isRoleOnBack(secondDiv);
+
+  var firstImg = firstDiv.find('.flipper');
+  var secondImg = secondDiv.find('.flipper');
+
+  var firstClone = firstImg.clone();
+  var secondClone = secondImg.clone();
+
+  firstClone.css('position', 'absolute');
+  firstClone.attr('id', 'clone');
+  secondClone.css('position', 'absolute');
+  secondClone.attr('id', 'clone');
+
+  var topFirst = firstDiv.position().top + firstImg.position().top; console.log(topFirst);
+  var leftFirst = firstDiv.position().left;
+  firstClone.css('top', topFirst + 'px');
+  firstClone.css('left', leftFirst + 'px'); console.log(firstClone.css('top'));
+  firstClone.css('zindex', 4);
+  var topSecond = secondDiv.position().top + secondImg.position().top;
+  var leftSecond = secondDiv.position().left;
+  secondClone.css('top', topSecond + 'px');
+  secondClone.css('left', leftSecond + 'px');
+  secondClone.css('zindex', 4);
+
+  if (0) {
+    $('#content').find('#content').append(firstClone);
+    $('#content').find('#content').append(secondClone);
+  } else {
+    $('#content').append(secondClone);
+    $('#content').append(firstClone);
+  }
+
+  // Now clones are on top of cards
+  firstDiv.find('.back').css('visibility', 'hidden');
+  secondImg.find('.back').css('visibility', 'hidden');
+  firstDiv.find('.front').css('visibility', 'hidden');
+  secondImg.find('.front').css('visibility', 'hidden');
+
+  // Switch images on hidden cards
+  var srcFirst = firstImg.find('#card-back').attr('src');
+  firstImg.find('#card-back').attr('src', secondImg.find('#card-back').attr('src'))
+  secondImg.find('#card-back').attr('src', srcFirst);
+
+  if (flipFirst) {
+    firstFunc = FUNCS.gas;
+    var back = secondDiv.find('.back');
+    var front = secondDiv.find('.front');
+    var cback = firstClone.find('.back');
+    var cfront = firstClone.find('.front');
+    back.attr('src', cback.attr('src'));
+    front.attr('src', cfront.attr('src'));
+    secondDiv.find('.flipper').removeClass('flip');
+  }
+  if (flipSecond) {
+    secondFunc = FUNCS.gas;
+    var back = firstDiv.find('.back');
+    var front = firstDiv.find('.front');
+    var cback = secondClone.find('.back');
+    var cfront = secondClone.find('.front');
+    back.attr('src', cback.attr('src'));
+    front.attr('src', cfront.attr('src'));
+    firstDiv.find('.flipper').removeClass('flip');
+  }
+
+  var topFirst = firstClone.position().top + firstImg.position().top;
+  var leftFirst = firstClone.position().left;
+
+  var topSecond = secondClone.position().top + secondImg.position().top;
+  var leftSecond = secondClone.position().left;
+
+  function afterAnimation(div, clone) {
+    div.find('.back').css('visibility', 'visible');
+    div.find('.front').css('visibility', 'visible');
+    clone.remove();
+  }
+
+  // Animate
+  moveCard('1', firstFunc, firstClone, (leftSecond - leftFirst), (topSecond - topFirst), firstDiv, afterAnimation);
+
+  moveCard('2', secondFunc, secondClone, -(leftSecond - leftFirst), -(topSecond - topFirst), secondDiv, afterAnimation);
+}
+
+function moveCard(id, func, flipper, left, top, div, callback) {
+  var func = EASE[func];
+  var styleText = '\
+    @keyframes move' + id + ' {\
+      from {\
+      \
+      }\
+      to {\
+        transform: translate(' + left + 'px, ' + top + 'px);\
+      }\
+    }\
+    .move' + id + ' {\
+      animation: move' + id + ' normal 2s forwards cubic-bezier(' + func + ');\
+    }\
+  '
+  $('head').append('<style type="text/css">' + styleText + '</style>');
+
+  flipper.addClass('move' + id);
+
+  setTimeout(function () {
+    callback(div, flipper);
+  }, 2000);
+  // .17,1.33,1,.61
+}
+
+
+function startBlinking(playerDiv) {
+  playerDiv.find('#player-username').addClass('blink');
+}
+
+function stopBlinking(playerDiv) {
+  playerDiv.find('#player-username').removeClass('blink');
+}
+
+function startFadeBlinking(playerDiv) {
+  playerDiv.find('.flipper').addClass('fade');
+}
+
+function stopFadeBlinking(playerDiv) {
+  playerDiv.find('.flipper').removeClass('fade');
+}
+
+var socket = io.connect('http://' + HOST + ':' + PORT);
+// var socket = io.connect('http://852a0a5d.ngrok.io');
+
+
+socket.on('see-role-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  socket.username = username;
+  socket.role = role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
+socket.on('saw-role-aproved', function (data) {
+  var playerDiv = findDiv(socket.username);
+
+  hideRole(playerDiv);
+});
+
+socket.on('werewolf-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+socket.on('werewolf-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
+socket.on('seer-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+socket.on('seer-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
+socket.on('robber-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+socket.on('robber-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+  var myDiv = findDiv(socket.username);
+
+  setRoleToBack(playerDiv, role);
+  animationSwitchCards(myDiv, playerDiv);
+
+});
+
+socket.on('troublemaker-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+
+socket.on('drunk-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+socket.on('idle-poll', function (data) {
+  gameState = data.state;
+  var pollRole = data.role;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+
+    hideRole(playerDiv);
+    stopBlinking(playerDiv);
+  });
+});
+
+socket.on('start-discussion', function (data) {
+  gameState = data.state;
+  $('#div-reveal').css('display', 'block');
+});
+
+socket.on('reveal-aproved', function (data) {
+  var players = data.players;
+  players.forEach(function (player) {
+    var playerDiv = findDiv(player.username);
+
+    revealRole(playerDiv, player.role);
+  });
+  gameState = STATES.doNothing;
+});
+
+socket.on('new-room-declined', function(data) {
+  var errorMessage = data.errorMessage;
+  $errorMessage.text(errorMessage);
+});
+
+socket.on('new-room-aproved', function(data) {
+  var roomName = data.roomName;
+  socket.emit('enter-room', {
+    roomName: roomName
+  });
+});
+
+socket.on('new-room-declined', function(data) {
+  var errorMessage = data.errorMessage;
+  $errorMessage.text(errorMessage);
+});
+
+socket.on('start-game', function (data) {
+  console.log('startsss');
+  gameState = data.state;
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  // Prepare width for game page
+  $('#content').css('width', '100%');
+  onGameStart();
+});
+
+socket.on('update-lobby', function (data) {
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  onLobyStart();
+});
+
+socket.on('update-room', function (data) {
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  onRoomStart();
+});
+
+socket.on('login-declined', function(data) {
+  var errorMessage = data.errorMessage;
+  $errorMessage.text(errorMessage);
+});
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
 var audioToogleOn = new Audio('../assets/sounds/toogle-on.mp3');
