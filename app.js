@@ -209,6 +209,7 @@ Game.prototype.start = function Game_start(room) {
     player.enterGame(room.name);
 
     // Add player to game
+    console.log(player.username);
     that.addPlayer(player.username, player);
 
     sendGamePage(player, players, STATES.roleView);
@@ -541,7 +542,15 @@ ROOMS.toList = function ROOMS_toList() {
 }
 
 function reconnect(username, client) {
-  PLAYERS.add(username, client, PLAYERS.getData(username))
+  PLAYERS.add(username, client, PLAYERS.getData(username));
+
+  // if player was in room add him to room
+  if (client.isIn(LOCATIONS.room)) {
+    var room = ROOMS.exists(client.getRoom());
+    if (room) {
+      room.addPlayer(client.username, client);
+    }
+  }
 }
 
 function pollAll(pollRoles, ind, callback) {
@@ -568,6 +577,20 @@ function getSelectedRoles(roles) {
 
 function getCenterCardsNumber(roles) {
   return roles.indexOf(ROLES.alphaWolf) < 0 ? 3 : 4;
+}
+
+function deleteRoom(roomName) {
+  // Report to all disconnected players that room is deleted
+  PLAYERS.toList().forEach(function (player) {
+    if (!player.isConnected())
+      player.goTo(LOCATIONS.lobby);
+  });
+
+  ROOMS.delete(roomName);
+}
+
+function deleteGame(gameName) {
+
 }
 
 function sendLobbyPage(player, rooms) {
@@ -623,20 +646,16 @@ function sendRoomPage(player, players) {
 
 function updateRooms() {
   ROOMS.toList().forEach(function (room) {
-    updateRoom(room/name)
+    updateRoom(room.name)
   });
 }
 
 function updateRoom(roomName) {
+  var room = ROOMS.exists(roomName);
+  if (!room)
+    return;
   // Create players list from this room
-  var players = [];
-  PLAYERS.toList().forEach(function (player) {
-    if (player.isIn(LOCATIONS.room) && player.inRoom(roomName)) {
-      players.push({
-        username: player.username
-      });
-    }
-  });
+  var players = getPlayersUsernames(room.getPlayers());
 
   // Send update to all clients who are in lobby
   PLAYERS.toList().forEach(function (player) {
@@ -686,6 +705,18 @@ io.sockets.on('connection', function (client) {
 
   // Prepare empty data for client
   client.data = {};
+
+  client.connect = function () {
+    this.data.connected = true;
+  }
+
+  client.disconnect = function () {
+    this.data.connected = false;
+  }
+
+  client.isConnected = function () {
+    return this.data.connected;
+  }
 
   client.authenticate = function (uuid) {
     return this.getUUID() == uuid;
@@ -744,6 +775,7 @@ io.sockets.on('connection', function (client) {
   }
 
   client.on('disconnect', function () {
+    client.disconnect();
     console.log(client.id + ' disconnected');
 
     // Update room where player maybe was
@@ -752,7 +784,7 @@ io.sockets.on('connection', function (client) {
       room.deletePlayer(client.username);
       updateRoom(room.name);
       if (room.isEmpty()) {
-        ROOMS.delete(room.name);
+        deleteRoom(room.name);
       }
     }
 
@@ -848,7 +880,7 @@ io.sockets.on('connection', function (client) {
 
   client.on('saw-role', function (data) {
     var username = client.username;
-    var gameName = client.gameName;
+    var gameName = client.getGame();
 
     // Get the game
     var game = GAMES.exists(gameName);
@@ -919,7 +951,7 @@ io.sockets.on('connection', function (client) {
     GAMES.exists(roomName).start(room);
 
     // Delete room
-    ROOMS.delete(roomName);
+    deleteRoom(roomName);
   });
 
   client.on('back-to-lobby', function (data) {
@@ -931,7 +963,7 @@ io.sockets.on('connection', function (client) {
 
     // If no players left in room delete it
     if (room.isEmpty()) {
-      ROOMS.delete(room.name);
+      deleteRoom(room.name);
     }
 
     // If admin left the room give it to someone else (first from list)
@@ -1017,16 +1049,19 @@ io.sockets.on('connection', function (client) {
 
     var player = PLAYERS.exists(username);
     if (player) {
-      if (PLAYERS.connected(username))) {
+
+      if (!player.authenticate(uuid) && player.isConnected()) {
+        sendError(client, 'login-declined', 'Username taken');
+        return;
+      }
+
+      if (player.isConnected()) {
         sendError(client, 'login-declined', 'Already logged in');
         return;
       }
 
-      if (!player.authenticate(uuid)) {
-        sendError(client, 'login-declined', 'Username taken');
-        return;
-      }
       reconnect(username, client);
+      client.connect();
       console.log('Reconnected player ' + username);
       client.emit('login-aproved', {
         username: client.username,
@@ -1049,6 +1084,7 @@ io.sockets.on('connection', function (client) {
       console.log('Give new uuid ' + client.getUUID() + ' for ' + username);
     }
 
+    client.connect();
     console.log(' uuid ' + client.getUUID());
     client.emit('login-aproved', {
       username: client.username,
