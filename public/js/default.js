@@ -14,6 +14,12 @@ var STATES = {
   discussion: 9
 }
 
+var FUNCS = {
+  lagan: 'lagan',
+  gas: 'gas'
+}
+
+
 var troublemakerPick = '';
 
 var $start = $('#start');
@@ -230,7 +236,7 @@ function playerClicked(div) {
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
       troublemakerPick = clickedUsername;
       playerDiv = findDiv(clickedUsername);
-      playerDiv.css('border-bottom', '5px solid white');
+      startBlinking(playerDiv);
       gameState = STATES.troublemakerActionSwitch;
       audioPlayerClick.play();
     }
@@ -238,7 +244,6 @@ function playerClicked(div) {
   }
 
   if (gameState == STATES.troublemakerActionSwitch) {
-    console.log(clickedUsername);
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername) && troublemakerPick != clickedUsername) {
       playerDiv = findDiv(clickedUsername);
       animationSwitchCards(findDiv(troublemakerPick), playerDiv);
@@ -254,9 +259,9 @@ function playerClicked(div) {
   }
 
   if (gameState == STATES.drunkAction) {
-    playerDiv = findDiv(clickedUsername);
-    animationSwitchCards(findDiv(socket.username), playerDiv);
     if (isCenterCard(clickedUsername)) {
+      playerDiv = findDiv(clickedUsername);
+      animationSwitchCards(findDiv(socket.username), playerDiv);
       socket.emit('drunk-action', {
         username: clickedUsername
       });
@@ -296,6 +301,14 @@ function revealRole(playerDiv, role) {
   playerDiv.find('.flipper').removeClass('flip');
 }
 
+function setRoleToBack(playerDiv, role) {
+  playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+}
+
+function isRoleOnBack(playerDiv) {
+  return playerDiv.find('#card-back').attr('src') != '../assets/images/card-back.png';
+}
+
 function hideRole(playerDiv) {
   playerDiv.find('.flipper').addClass('flip');
   setTimeout(function () {
@@ -303,12 +316,22 @@ function hideRole(playerDiv) {
   }, 600);
 }
 
+
+// If wants to flip before this need to call setRoleToBack
 function animationSwitchCards(firstDiv, secondDiv) {
+
+
+  var firstId = FUNCS.lagan;
+  var secondId = FUNCS.lagan;
+
+  var flipFirst = isRoleOnBack(firstDiv);
+  var flipSecond = isRoleOnBack(secondDiv);
+
   var firstImg = firstDiv.find('.flipper');
   var secondImg = secondDiv.find('.flipper');
 
-  var firstClone = firstImg.find('#card-back').clone();
-  var secondClone = secondImg.find('#card-back').clone();
+  var firstClone = firstImg.clone();
+  var secondClone = secondImg.clone();
 
   firstClone.css('position', 'absolute');
   firstClone.attr('id', 'clone');
@@ -319,14 +342,19 @@ function animationSwitchCards(firstDiv, secondDiv) {
   var leftFirst = firstDiv.position().left;
   firstClone.css('top', topFirst + 'px');
   firstClone.css('left', leftFirst + 'px'); console.log(firstClone.css('top'));
-
+  firstClone.css('zindex', 4);
   var topSecond = secondDiv.position().top + secondImg.position().top;
   var leftSecond = secondDiv.position().left;
   secondClone.css('top', topSecond + 'px');
   secondClone.css('left', leftSecond + 'px');
+  secondClone.css('zindex', 4);
 
   $('#content').find('#content').append(firstClone);
   $('#content').find('#content').append(secondClone);
+
+
+  // $('#content').append(firstClone);
+  // $('#content').append(secondClone);
 
   // Now clones are on top of cards
   firstDiv.find('.back').css('visibility', 'hidden');
@@ -336,20 +364,74 @@ function animationSwitchCards(firstDiv, secondDiv) {
 
   // Switch images on hidden cards
   var srcFirst = firstImg.find('#card-back').attr('src');
-  firstImg.find('#card-back').attr('src', secondImg.attr('src'))
+  firstImg.find('#card-back').attr('src', secondImg.find('#card-back').attr('src'))
   secondImg.find('#card-back').attr('src', srcFirst);
 
+  if (flipFirst) {
+    firstId = FUNCS.gas;
+    var back = secondDiv.find('.back');
+    var front = secondDiv.find('.front');
+    var cback = firstClone.find('.back');
+    var cfront = firstClone.find('.front');
+    back.attr('src', cback.attr('src'));
+    front.attr('src', cfront.attr('src'));
+    secondDiv.find('.flipper').removeClass('flip');
+  }
+  if (flipSecond) {
+    secondId = FUNCS.gas;
+    var back = firstDiv.find('.back');
+    var front = firstDiv.find('.front');
+    var cback = secondClone.find('.back');
+    var cfront = secondClone.find('.front');
+    back.attr('src', cback.attr('src'));
+    front.attr('src', cfront.attr('src'));
+    firstDiv.find('.flipper').removeClass('flip');
+  }
+
+  var topFirst = firstClone.position().top + firstImg.position().top;
+  var leftFirst = firstClone.position().left;
+
+  var topSecond = secondClone.position().top + secondImg.position().top;
+  var leftSecond = secondClone.position().left;
+
+  function afterAnimation(div, clone) {
+    div.find('.back').css('visibility', 'visible');
+    div.find('.front').css('visibility', 'visible');
+    clone.remove();
+  }
+
+
   // Animate
-  firstClone.animate({top: secondClone.css('top'), left: secondClone.position().left}, 1000, 'linear', function () {
-    firstDiv.find('.back').css('visibility', 'visible');
-    firstDiv.find('.front').css('visibility', 'visible');
-    firstClone.remove();
-  });
-  secondClone.animate({top: firstClone.position().top, left: firstClone.position().left}, 1000, 'linear', function () {
-    secondDiv.find('.back').css('visibility', 'visible');
-    secondDiv.find('.front').css('visibility', 'visible');
-    secondClone.remove();
-  });
+  moveCard(firstId, firstClone, (leftSecond - leftFirst), (topSecond - topFirst), firstDiv, afterAnimation);
+
+  moveCard(secondId, secondClone, -(leftSecond - leftFirst), -(topSecond - topFirst), secondDiv, afterAnimation);
+}
+
+function moveCard(id, flipper, left, top, div, callback) {
+  var func = '.17,1.33,1,.61';
+  if (id=='lagan')
+    func = '.13,-0.2,.7,1.7';
+  var styleText = '\
+    @keyframes move' + id + ' {\
+      from {\
+      \
+      }\
+      to {\
+        transform: translate(' + left + 'px, ' + top + 'px);\
+      }\
+    }\
+    .move' + id + ' {\
+      animation: move' + id + ' normal 2s forwards cubic-bezier(' + func + ');\
+    }\
+  '
+  $('head').append('<style type="text/css">' + styleText + '</style>');
+
+  flipper.addClass('move' + id);
+
+  setTimeout(function () {
+    callback(div, flipper);
+  }, 2000);
+  // .17,1.33,1,.61
 }
 
 var socket = io.connect('http://' + HOST + ':' + PORT);
@@ -380,7 +462,7 @@ socket.on('werewolf-poll', function (data) {
 
   usernames.forEach(function (username) {
     var playerDiv = findDiv(username);
-    playerDiv.css('border-bottom', '5px solid white');
+    startBlinking(playerDiv);
   });
 
 });
@@ -400,7 +482,7 @@ socket.on('seer-poll', function (data) {
 
   usernames.forEach(function (username) {
     var playerDiv = findDiv(username);
-    playerDiv.css('border-bottom', '5px solid white');
+    startBlinking(playerDiv);
   });
 
 });
@@ -420,7 +502,7 @@ socket.on('robber-poll', function (data) {
 
   usernames.forEach(function (username) {
     var playerDiv = findDiv(username);
-    playerDiv.css('border-bottom', '5px solid white');
+    startBlinking(playerDiv);
   });
 
 });
@@ -432,11 +514,8 @@ socket.on('robber-action-aproved', function (data) {
   var playerDiv = findDiv(username);
   var myDiv = findDiv(socket.username);
 
+  setRoleToBack(playerDiv, role);
   animationSwitchCards(myDiv, playerDiv);
-
-  setTimeout(function functionName() {
-    revealRole(myDiv, role);
-  }, 3000);
 
 });
 
@@ -446,10 +525,18 @@ socket.on('troublemaker-poll', function (data) {
 
   usernames.forEach(function (username) {
     var playerDiv = findDiv(username);
-    playerDiv.css('border-bottom', '5px solid white');
+    startBlinking(playerDiv);
   });
 
 });
+
+function startBlinking(playerDiv) {
+  playerDiv.find('#player-username').addClass('blink');
+}
+
+function stopBlinking(playerDiv) {
+  playerDiv.find('#player-username').removeClass('blink');
+}
 
 socket.on('drunk-poll', function (data) {
   gameState = data.state;
@@ -457,7 +544,7 @@ socket.on('drunk-poll', function (data) {
 
   usernames.forEach(function (username) {
     var playerDiv = findDiv(username);
-    playerDiv.css('border-bottom', '5px solid white');
+    startBlinking(playerDiv);
   });
 
 });
@@ -471,7 +558,7 @@ socket.on('idle-poll', function (data) {
     var playerDiv = findDiv(username);
 
     hideRole(playerDiv);
-    playerDiv.css('border-bottom', '0');
+    stopBlinking(playerDiv);
   });
 });
 
@@ -500,6 +587,11 @@ socket.on('new-room-aproved', function(data) {
   socket.emit('enter-room', {
     roomName: roomName
   });
+});
+
+socket.on('new-room-declined', function(data) {
+  var errorMessage = data.errorMessage;
+  $errorMessage.text(errorMessage);
 });
 
 socket.on('start-game', function (data) {

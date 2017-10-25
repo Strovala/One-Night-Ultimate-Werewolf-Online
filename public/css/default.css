@@ -109,9 +109,6 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-transform: translate(-70%, -65%); /* Set pivot to center */
 }
 
-
-
-
 .flip-container {
 	perspective: 1000px;
 }
@@ -148,4 +145,20 @@ h1, h2, h3, h4, h5, h6 {
 /* back, initially hidden pane */
 .back {
 	transform: rotateY(180deg);
+}
+
+@keyframes blink {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(2);
+  }
+  100% {
+    transform: scale(1);
+}
+}
+.blink {
+  animation: blink normal 2s infinite ease-in-out;
+  transform-origin: center bottom;
 }

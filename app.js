@@ -30,6 +30,10 @@ app.get('/', function (req, res) {
   });
 });
 
+app.get('/test', function (req, res) {
+  res.render('test');
+});
+
 var ROLES = {
   doppelganger: 'doppelganger',
   werewolf:     'werewolf',
