@@ -38,141 +38,6 @@ function onGameStart() {
     socket.emit('see-role');
   }, 3000);
 
-  socket.on('see-role-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    socket.username = username;
-    socket.role = role;
-
-    var playerDiv = findDiv(username);
-
-    revealRole(playerDiv, role);
-  });
-
-  socket.on('saw-role-aproved', function (data) {
-    var playerDiv = findDiv(socket.username);
-
-    hideRole(playerDiv);
-  });
-
-  socket.on('werewolf-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('werewolf-action-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    var playerDiv = findDiv(username);
-
-    revealRole(playerDiv, role);
-  });
-
-  socket.on('seer-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('seer-action-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    var playerDiv = findDiv(username);
-
-    revealRole(playerDiv, role);
-  });
-
-  socket.on('robber-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('robber-action-aproved', function (data) {
-    var username = data.username;
-    var role = data.role;
-
-    var playerDiv = findDiv(username);
-
-    revealRole(playerDiv, role);
-
-    setTimeout(function () {
-      hideRole(playerDiv);
-    }, 3000);
-
-    setTimeout(function () {
-      animationSwitchCards(findDiv(socket.username), playerDiv);
-    }, 5000);
-  });
-
-  socket.on('troublemaker-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('drunk-poll', function (data) {
-    gameState = data.state;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-      playerDiv.css('border-bottom', '5px solid white');
-    });
-
-  });
-
-  socket.on('idle-poll', function (data) {
-    gameState = data.state;
-    var pollRole = data.role;
-    var usernames = data.usernames;
-
-    usernames.forEach(function (username) {
-      var playerDiv = findDiv(username);
-
-      hideRole(playerDiv);
-      playerDiv.css('border-bottom', '0');
-    });
-  });
-
-  socket.on('start-discussion', function (data) {
-    gameState = data.state;
-    $('#div-reveal').css('display', 'block');
-  });
-
-  socket.on('reveal-aproved', function (data) {
-    var players = data.players;
-    players.forEach(function (player) {
-      var playerDiv = findDiv(player.username);
-
-      revealRole(playerDiv, player.role);
-    });
-    gameState = STATES.doNothing;
-  });
 }
 
 function onRoomStart() {
@@ -196,24 +61,6 @@ function onRoomStart() {
       roomName: $roomName.text()
     });
     audioClick.play();
-  });
-
-  socket.on('start-game-declined', function (data) {
-    var errorMessage = data.errorMessage;
-    $errorMessage.text(errorMessage);
-  });
-
-
-  socket.on('start-game', function (data) {
-    gameState = data.state;
-    var page = $(data.page);
-    var content = $.grep(page, function(e) {
-      return e.id == 'content';
-    });
-    $('#content').html(content);
-    // Prepare width for game page
-    $('#content').css('width', '100%');
-    onGameStart();
   });
 }
 
@@ -255,17 +102,6 @@ function onLobyStart() {
     audioClick.play();
   });
 
-  socket.on('new-room-declined', function(data) {
-    var errorMessage = data.errorMessage;
-    $errorMessage.text(errorMessage);
-  });
-
-  socket.on('new-room-aproved', function(data) {
-    var roomName = data.roomName;
-    socket.emit('enter-room', {
-      roomName: roomName
-    });
-  });
 }
 
 $start.click(function() {
@@ -282,32 +118,6 @@ $username.keyup(function(event) {
   if (event.keyCode == 13) {
       $start.click();
   }
-});
-
-var socket = io.connect('http://' + HOST + ':' + PORT);
-// var socket = io.connect('http://852a0a5d.ngrok.io');
-
-socket.on('update-lobby', function (data) {
-  var page = $(data.page);
-  var content = $.grep(page, function(e) {
-    return e.id == 'content';
-  });
-  $('#content').html(content);
-  onLobyStart();
-});
-
-socket.on('update-room', function (data) {
-  var page = $(data.page);
-  var content = $.grep(page, function(e) {
-    return e.id == 'content';
-  });
-  $('#content').html(content);
-  onRoomStart();
-});
-
-socket.on('login-declined', function(data) {
-  var errorMessage = data.errorMessage;
-  $errorMessage.text(errorMessage);
 });
 
 function enterRoom(room) {
@@ -541,6 +351,192 @@ function animationSwitchCards(firstDiv, secondDiv) {
     secondClone.remove();
   });
 }
+
+var socket = io.connect('http://' + HOST + ':' + PORT);
+// var socket = io.connect('http://852a0a5d.ngrok.io');
+
+
+socket.on('see-role-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  socket.username = username;
+  socket.role = role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
+socket.on('saw-role-aproved', function (data) {
+  var playerDiv = findDiv(socket.username);
+
+  hideRole(playerDiv);
+});
+
+socket.on('werewolf-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    playerDiv.css('border-bottom', '5px solid white');
+  });
+
+});
+
+socket.on('werewolf-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
+socket.on('seer-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    playerDiv.css('border-bottom', '5px solid white');
+  });
+
+});
+
+socket.on('seer-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
+socket.on('robber-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    playerDiv.css('border-bottom', '5px solid white');
+  });
+
+});
+
+socket.on('robber-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+  var myDiv = findDiv(socket.username);
+
+  animationSwitchCards(myDiv, playerDiv);
+
+  setTimeout(function functionName() {
+    revealRole(myDiv, role);
+  }, 3000);
+
+});
+
+socket.on('troublemaker-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    playerDiv.css('border-bottom', '5px solid white');
+  });
+
+});
+
+socket.on('drunk-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    playerDiv.css('border-bottom', '5px solid white');
+  });
+
+});
+
+socket.on('idle-poll', function (data) {
+  gameState = data.state;
+  var pollRole = data.role;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+
+    hideRole(playerDiv);
+    playerDiv.css('border-bottom', '0');
+  });
+});
+
+socket.on('start-discussion', function (data) {
+  gameState = data.state;
+  $('#div-reveal').css('display', 'block');
+});
+
+socket.on('reveal-aproved', function (data) {
+  var players = data.players;
+  players.forEach(function (player) {
+    var playerDiv = findDiv(player.username);
+
+    revealRole(playerDiv, player.role);
+  });
+  gameState = STATES.doNothing;
+});
+
+socket.on('new-room-declined', function(data) {
+  var errorMessage = data.errorMessage;
+  $errorMessage.text(errorMessage);
+});
+
+socket.on('new-room-aproved', function(data) {
+  var roomName = data.roomName;
+  socket.emit('enter-room', {
+    roomName: roomName
+  });
+});
+
+socket.on('start-game', function (data) {
+  console.log('startsss');
+  gameState = data.state;
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  // Prepare width for game page
+  $('#content').css('width', '100%');
+  onGameStart();
+});
+
+socket.on('update-lobby', function (data) {
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  onLobyStart();
+});
+
+socket.on('update-room', function (data) {
+  var page = $(data.page);
+  var content = $.grep(page, function(e) {
+    return e.id == 'content';
+  });
+  $('#content').html(content);
+  onRoomStart();
+});
+
+socket.on('login-declined', function(data) {
+  var errorMessage = data.errorMessage;
+  $errorMessage.text(errorMessage);
+});
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
 var audioToogleOn = new Audio('../assets/sounds/toogle-on.mp3');

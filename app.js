@@ -192,12 +192,11 @@ Game.prototype.start = function Game_start(room) {
   var that = this;
   room.getPlayers().forEach(function (player) {
     // Save that player is in game with name same as room name
-    player.status = LOCATIONS.inGame;
-    player.gameName = room.name;
+    player.goTo(LOCATIONS.game);
+    player.enterGame(room.name);
 
     // Add player to game
     that.addPlayer(player.username, player);
-    player.goTo(LOCATIONS.game);
 
     sendGamePage(player, players, STATES.roleView);
   });
@@ -348,11 +347,16 @@ Game.prototype.startDiscussion = function Game_startDiscussion() {
 
 Game.prototype.reveal = function Game_reveal() {
   var endRoles = this.getEndRoles();
-  console.log('End roles ' + endRoles);
+
   this.getPlayers().forEach(function (player) {
     player.emit('reveal-aproved', {
       players: endRoles
     });
+  });
+
+  console.log('End roles ');
+  endRoles.forEach(function (endRole) {
+    console.log(endRole);
   });
 };
 
@@ -813,6 +817,8 @@ io.sockets.on('connection', function (client) {
   client.on('see-role', function (data) {
     var username = client.username;
     var gameName = client.gameName;
+
+    console.log(client.username + ' requseted to see role');
 
     // Get the game
     var game = GAMES.exists(gameName);
