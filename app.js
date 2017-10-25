@@ -4,6 +4,7 @@ var
     socket          = require('socket.io'),
     express         = require('express'),
     UUID            = require('uuid/v4'),
+    cookie    = require('cookie')
     pug             = require('pug'),
 
     verbose         = false,
@@ -141,8 +142,16 @@ Players.prototype.exists = function Players_exists(username) {
   return this[username];
 }
 
-Players.prototype.add = function Players_add(username, client) {
+Players.prototype.getData = function (username) {
+  var player = this.exists(username);
+  if (player)
+    return player.data;
+};
+
+Players.prototype.add = function Players_add(username, client, data) {
   client.username = username;
+  if (data)
+    client.data = data;
   this[username] = client;
 }
 
@@ -531,6 +540,10 @@ ROOMS.toList = function ROOMS_toList() {
   return values;
 }
 
+function reconnect(username, client) {
+  PLAYERS.add(username, client, PLAYERS.getData(username))
+}
+
 function pollAll(pollRoles, ind, callback) {
   if (ind >= pollRoles.length) {
     pollRoles[0]();
@@ -596,8 +609,8 @@ function sendRoomPage(player, players) {
   var page = pug.compileFile('./views/room.pug')({
     title: "One Night Ultimate Werewolf",
     players: players,
-    roomName: player.roomName,
-    rolesList: ROOMS.exists(player.roomName).roles,
+    roomName: player.getRoom(),
+    rolesList: ROOMS.exists(player.getRoom()).roles,
     start: "Start",
     back: "Back"
   });
@@ -605,6 +618,12 @@ function sendRoomPage(player, players) {
   // Send client data
   player.emit('update-room', {
     page: page
+  });
+}
+
+function updateRooms() {
+  ROOMS.toList().forEach(function (room) {
+    updateRoom(room/name)
   });
 }
 
@@ -642,8 +661,8 @@ function sendGamePage(player, players, state) {
   });
 }
 
-function sendError(client, event, message) {
-  client.emit(event, {
+function sendError(client, socketEvent, message) {
+  client.emit(socketEvent, {
     errorMessage: message
   });
 }
@@ -665,54 +684,76 @@ function isCenterCard(username) {
 io.sockets.on('connection', function (client) {
   console.log('New connection : ' + client.id);
 
+  // Prepare empty data for client
+  client.data = {};
+
+  client.authenticate = function (uuid) {
+    return this.getUUID() == uuid;
+  }
+
+  client.getUUID = function () {
+    return this.data.uuid;
+  }
+
+  client.setUUID = function (uuid) {
+    this.data.uuid = uuid;
+  }
+
   client.isIn = function (location) {
-    return this.status == location;
+    return this.data.status == location;
   }
 
   client.goTo = function (location) {
-    this.status = location;
+    this.data.status = location;
   }
 
   client.inRoom = function (roomName) {
-    return this.roomName == roomName;
+    return this.data.roomName == roomName;
   }
 
   client.enterRoom = function (roomName) {
-    this.roomName = roomName;
+    this.data.roomName = roomName;
+  }
+
+  client.getRoom = function () {
+    return this.data.roomName;
   }
 
   client.inGame = function (gameName) {
-    return this.gameName == gameName;
+    return this.data.gameName == gameName;
   }
 
   client.enterGame = function (gameName) {
-    this.gameName = gameName;
+    this.data.gameName = gameName;
+  }
+
+  client.getGame = function () {
+    return this.data.gameName;
   }
 
   client.removeAdmin = function () {
-    this.admin = false;
+    this.data.admin = false;
   }
 
   client.setAdmin = function () {
-    this.admin = true;
+    this.data.admin = true;
   }
 
   client.isAdmin = function () {
-    return this.admin;
+    return this.data.admin;
   }
 
   client.on('disconnect', function () {
-    PLAYERS.delete(client.username);
-    console.log('Deleted player with username ' + client.username);
     console.log(client.id + ' disconnected');
 
     // Update room where player maybe was
-    var room = ROOMS.exists(client.roomName);
+    var room = ROOMS.exists(client.getRoom());
     if (room) {
       room.deletePlayer(client.username);
       updateRoom(room.name);
-      if (room.isEmpty())
+      if (room.isEmpty()) {
         ROOMS.delete(room.name);
+      }
     }
 
     var game = GAMES.exists(client.gameName);
@@ -729,7 +770,7 @@ io.sockets.on('connection', function (client) {
   client.on('reveal', function () {
     console.log('Requested reveal by' + client.username);
 
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     game.reveal();
   });
 
@@ -740,7 +781,7 @@ io.sockets.on('connection', function (client) {
 
     // Switch cards that drunk clicked
     // because its D R U N K
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     game.drunkAction(client.username, clickedCard);
   });
 
@@ -752,7 +793,7 @@ io.sockets.on('connection', function (client) {
 
     // Switch cards that troublemaker clicked
     // because its T R O U B L E M A K E R
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     game.troublemakerAction(usernamePick, usernameSwitch);
   });
 
@@ -762,7 +803,7 @@ io.sockets.on('connection', function (client) {
     console.log('Robber action clicked ' + clickedCard);
 
     // Get role of clicked card
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     var role = game.getPlayerRole(clickedCard);
 
     client.emit('robber-action-aproved', {
@@ -781,7 +822,7 @@ io.sockets.on('connection', function (client) {
     console.log('Seer action clicked ' + clickedCard);
 
     // Get role of clicked card
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     var role = game.getPlayerRole(clickedCard);
 
     client.emit('seer-action-aproved', {
@@ -796,7 +837,7 @@ io.sockets.on('connection', function (client) {
     console.log('Werewolf action clicked ' + clickedCard);
 
     // Get role of clicked card
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     var role = game.getPlayerRole(clickedCard);
 
     client.emit('werewolf-action-aproved', {
@@ -820,7 +861,7 @@ io.sockets.on('connection', function (client) {
 
   client.on('see-role', function (data) {
     var username = client.username;
-    var gameName = client.gameName;
+    var gameName = client.getGame();
 
     console.log(client.username + ' requseted to see role');
 
@@ -909,7 +950,7 @@ io.sockets.on('connection', function (client) {
     if (!client.isAdmin())
       client.removeAdmin();
 
-    console.log('Player with username ' + client.username +  ' admin: ' + client.admin + ' request to enter a room with name ' + roomName);
+    console.log('Player with username ' + client.username +  ' admin: ' + client.isAdmin() + ' request to enter a room with name ' + roomName);
 
     // Update client room info
     client.enterRoom(roomName);
@@ -920,7 +961,10 @@ io.sockets.on('connection', function (client) {
     // Update room players if this is not admin
     // We already updated players for him when he created room
     var room = ROOMS.exists(roomName);
+
     room.addPlayer(client.username, client);
+
+    var playerData = PLAYERS.getData(client.username);
 
     updateLobby();
     updateRoom(roomName);
@@ -959,6 +1003,8 @@ io.sockets.on('connection', function (client) {
 
   client.on('login-request', function (data) {
 
+    var uuid = cookie.parse(data.cookie || '').uuid;
+
     console.log(client.id + ' requested login with username ' + data.username);
     var username = data.username || '';
     // Check is username valid
@@ -968,17 +1014,48 @@ io.sockets.on('connection', function (client) {
       sendError(client, 'login-declined', 'Username must contain 3 to 15 characters');
       return;
     }
-    if (PLAYERS.exists(username)) {
-      sendError(client, 'login-declined', 'Username taken');
+
+    var player = PLAYERS.exists(username);
+    if (player) {
+      if (PLAYERS.connected(username))) {
+        sendError(client, 'login-declined', 'Already logged in');
+        return;
+      }
+
+      if (!player.authenticate(uuid)) {
+        sendError(client, 'login-declined', 'Username taken');
+        return;
+      }
+      reconnect(username, client);
+      console.log('Reconnected player ' + username);
+      client.emit('login-aproved', {
+        username: client.username,
+        uuid: client.getUUID()
+      });
+
+      updateLobby();
+      updateRooms();
       return;
     }
 
-    // Add client to players logged in
-    client.goTo(LOCATIONS.lobby);
+    if (!player) {
+      PLAYERS.add(username, client);
 
-    PLAYERS.add(username, client);
-    console.log('Added new player with username ' + username);
+      // Add client to players logged in
+      client.goTo(LOCATIONS.lobby);
+      client.setUUID(UUID());
+
+      console.log('Added new player with username ' + username);
+      console.log('Give new uuid ' + client.getUUID() + ' for ' + username);
+    }
+
+    console.log(' uuid ' + client.getUUID());
+    client.emit('login-aproved', {
+      username: client.username,
+      uuid: client.getUUID()
+    });
 
     updateLobby();
+    updateRooms();
   });
 });

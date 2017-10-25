@@ -29,7 +29,6 @@ var troublemakerPick = '';
 
 var $start = $('#start');
 var $username = $('#username');
-var $errorMessage = $('.errorMessage');
 
 var gameState;
 
@@ -55,7 +54,6 @@ function onRoomStart() {
   var $backToLobby = $('#back-to-lobby');
   var $roomName = $('#room-name-text');
   var $startGame = $('#start-game');
-  var $errorMessage = $('.errorMessage');
 
   $backToLobby.click(function () {
     socket.emit('back-to-lobby', {
@@ -82,7 +80,6 @@ function onLobyStart() {
   var $createRoom = $('#create-room');
   var $cancel = $('#cancel');
   var $roomName = $('#room-name');
-  var $errorMessage = $('.errorMessage');
 
   $roomName.keyup(function(event) {
     // If clicked Enter
@@ -100,14 +97,14 @@ function onLobyStart() {
   $cancel.click(function() {
     $modal.css({"display": "none"});
     $roomName.val('');
-    $errorMessage.text('');
+    $('.errorMessage').text('');
     audioClick.play();
   });
 
   $createRoom.click(function () {
     roomNameLength = $roomName.val().length;
     if (roomNameLength < 3 || roomNameLength > 15)
-      $errorMessage.text('Room name must contain 3 to 15 characters');
+      $('.errorMessage').text('Room name must contain 3 to 15 characters');
     else
       socket.emit('new-room-request', {roomName: $roomName.val()});
     audioClick.play();
@@ -118,9 +115,12 @@ function onLobyStart() {
 $start.click(function() {
   usernameLength = $username.val().length;
   if (usernameLength < 3 || usernameLength > 15)
-    $errorMessage.text('Username must contain 3 to 15 characters');
+    $('.errorMessage').text('Username must contain 3 to 15 characters');
   else
-    socket.emit('login-request', {username: $username.val()});
+    socket.emit('login-request', {
+      username: $username.val(),
+      cookie: document.cookie
+    });
   audioClick.play();
 });
 
@@ -592,7 +592,7 @@ socket.on('reveal-aproved', function (data) {
 
 socket.on('new-room-declined', function(data) {
   var errorMessage = data.errorMessage;
-  $errorMessage.text(errorMessage);
+  $('.errorMessage').text(errorMessage);
 });
 
 socket.on('new-room-aproved', function(data) {
@@ -604,7 +604,12 @@ socket.on('new-room-aproved', function(data) {
 
 socket.on('new-room-declined', function(data) {
   var errorMessage = data.errorMessage;
-  $errorMessage.text(errorMessage);
+  $('.errorMessage').text(errorMessage);
+});
+
+socket.on('start-game-declined', function (data) {
+  var errorMessage = data.errorMessage;
+  $('.errorMessage').text(errorMessage);
 });
 
 socket.on('start-game', function (data) {
@@ -638,9 +643,17 @@ socket.on('update-room', function (data) {
   onRoomStart();
 });
 
+socket.on('login-aproved', function(data) {
+  socket.username = data.username;
+  console.log(data.uuid);
+  socket.uuid = data.uuid;
+  console.log(socket.uuid);
+  document.cookie = 'uuid=' + socket.uuid;
+});
+
 socket.on('login-declined', function(data) {
   var errorMessage = data.errorMessage;
-  $errorMessage.text(errorMessage);
+  $('.errorMessage').text(errorMessage);
 });
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
