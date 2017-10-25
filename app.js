@@ -3,7 +3,7 @@ var
 
     socket          = require('socket.io'),
     express         = require('express'),
-    UUID            = require('node-uuid'),
+    UUID            = require('uuid/v4'),
     pug             = require('pug'),
 
     verbose         = false,

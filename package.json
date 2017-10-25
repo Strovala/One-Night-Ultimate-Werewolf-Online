@@ -18,9 +18,9 @@
   "homepage": "https://github.com/Strovala/One-Night-Ultimate-Werewolf-Online#readme",
   "dependencies": {
     "express": "^4.16.2",
-    "node-uuid": "^1.4.8",
     "nodemon": "^1.12.1",
     "pug": "^2.0.0-rc.4",
-    "socket.io": "^2.0.3"
+    "socket.io": "^2.0.3",
+    "uuid": "^3.1.0"
   }
 }
