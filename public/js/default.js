@@ -33,7 +33,10 @@ function onGameStart() {
     }
   });
 
-  socket.emit('see-role');
+  // See role after 3s
+  setTimeout(function () {
+    socket.emit('see-role');
+  }, 3000);
 
   socket.on('see-role-aproved', function (data) {
     var username = data.username;
@@ -43,12 +46,14 @@ function onGameStart() {
     socket.role = role;
 
     var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+
+    revealRole(playerDiv, role);
   });
 
   socket.on('saw-role-aproved', function (data) {
     var playerDiv = findDiv(socket.username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+
+    hideRole(playerDiv);
   });
 
   socket.on('werewolf-poll', function (data) {
@@ -67,7 +72,8 @@ function onGameStart() {
     var role = data.role;
 
     var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+
+    revealRole(playerDiv, role);
   });
 
   socket.on('seer-poll', function (data) {
@@ -86,7 +92,8 @@ function onGameStart() {
     var role = data.role;
 
     var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+
+    revealRole(playerDiv, role);
   });
 
   socket.on('robber-poll', function (data) {
@@ -105,7 +112,16 @@ function onGameStart() {
     var role = data.role;
 
     var playerDiv = findDiv(username);
-    playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+
+    revealRole(playerDiv, role);
+
+    setTimeout(function () {
+      hideRole(playerDiv);
+    }, 3000);
+
+    setTimeout(function () {
+      animationSwitchCards(findDiv(socket.username), playerDiv);
+    }, 5000);
   });
 
   socket.on('troublemaker-poll', function (data) {
@@ -137,7 +153,8 @@ function onGameStart() {
 
     usernames.forEach(function (username) {
       var playerDiv = findDiv(username);
-      playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+
+      hideRole(playerDiv);
       playerDiv.css('border-bottom', '0');
     });
   });
@@ -151,7 +168,8 @@ function onGameStart() {
     var players = data.players;
     players.forEach(function (player) {
       var playerDiv = findDiv(player.username);
-      playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + player.role + '.png');
+
+      revealRole(playerDiv, player.role);
     });
     gameState = STATES.doNothing;
   });
@@ -413,7 +431,7 @@ function playerClicked(div) {
     console.log(clickedUsername);
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername) && troublemakerPick != clickedUsername) {
       playerDiv = findDiv(clickedUsername);
-      playerDiv.css('border-bottom', '5px solid white');
+      animationSwitchCards(findDiv(troublemakerPick), playerDiv);
       socket.emit('troublemaker-action', {
         usernamePick: troublemakerPick,
         usernameSwitch: clickedUsername
@@ -427,7 +445,7 @@ function playerClicked(div) {
 
   if (gameState == STATES.drunkAction) {
     playerDiv = findDiv(clickedUsername);
-    playerDiv.css('border-bottom', '5px solid white');
+    animationSwitchCards(findDiv(socket.username), playerDiv);
     if (isCenterCard(clickedUsername)) {
       socket.emit('drunk-action', {
         username: clickedUsername
@@ -461,6 +479,67 @@ function isCenterCard(username) {
 
 function isMyself(username) {
   return socket.username == username;
+}
+
+function revealRole(playerDiv, role) {
+  playerDiv.find('#card-back').attr('src', '../assets/images/roles/' + role + '.png');
+  playerDiv.find('.flipper').removeClass('flip');
+}
+
+function hideRole(playerDiv) {
+  playerDiv.find('.flipper').addClass('flip');
+  setTimeout(function () {
+    playerDiv.find('#card-back').attr('src', '../assets/images/card-back.png');
+  }, 600);
+}
+
+function animationSwitchCards(firstDiv, secondDiv) {
+  var firstImg = firstDiv.find('.flipper');
+  var secondImg = secondDiv.find('.flipper');
+
+  var firstClone = firstImg.find('#card-back').clone();
+  var secondClone = secondImg.find('#card-back').clone();
+
+  firstClone.css('position', 'absolute');
+  firstClone.attr('id', 'clone');
+  secondClone.css('position', 'absolute');
+  secondClone.attr('id', 'clone');
+
+  var topFirst = firstDiv.position().top + firstImg.position().top; console.log(topFirst);
+  var leftFirst = firstDiv.position().left;
+  firstClone.css('top', topFirst + 'px');
+  firstClone.css('left', leftFirst + 'px'); console.log(firstClone.css('top'));
+
+  var topSecond = secondDiv.position().top + secondImg.position().top;
+  var leftSecond = secondDiv.position().left;
+  secondClone.css('top', topSecond + 'px');
+  secondClone.css('left', leftSecond + 'px');
+
+  $('#content').find('#content').append(firstClone);
+  $('#content').find('#content').append(secondClone);
+
+  // Now clones are on top of cards
+  firstDiv.find('.back').css('visibility', 'hidden');
+  secondImg.find('.back').css('visibility', 'hidden');
+  firstDiv.find('.front').css('visibility', 'hidden');
+  secondImg.find('.front').css('visibility', 'hidden');
+
+  // Switch images on hidden cards
+  var srcFirst = firstImg.find('#card-back').attr('src');
+  firstImg.find('#card-back').attr('src', secondImg.attr('src'))
+  secondImg.find('#card-back').attr('src', srcFirst);
+
+  // Animate
+  firstClone.animate({top: secondClone.css('top'), left: secondClone.position().left}, 1000, 'linear', function () {
+    firstDiv.find('.back').css('visibility', 'visible');
+    firstDiv.find('.front').css('visibility', 'visible');
+    firstClone.remove();
+  });
+  secondClone.animate({top: firstClone.position().top, left: firstClone.position().left}, 1000, 'linear', function () {
+    secondDiv.find('.back').css('visibility', 'visible');
+    secondDiv.find('.front').css('visibility', 'visible');
+    secondClone.remove();
+  });
 }
 
 var audioClick = new Audio('../assets/sounds/click.mp3');
