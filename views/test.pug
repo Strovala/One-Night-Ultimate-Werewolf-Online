@@ -1,7 +1,7 @@
 extends template.pug
 block content
   #content(style='width: 100%; position: relative')
-    .player-div(onclick='playerClicked(this);', style='top: 50vh; left: 50vw; position: absolute;')
+    .player-div(onclick='playerClicked(this);', style='top: 50vh; left: 10vw; position: absolute;')
       p#player-username(style='color: white; font-size: 1vw;') krimi
       .flip-container
         .flipper.flip
@@ -9,8 +9,8 @@ block content
             img#card-back.card-back-image(src="../assets/images/card-back.png", alt="Player")
           .back
             img.card-back-image(src="../assets/images/card-back.png", alt="Player")
-    .player-div(onclick='playerClicked(this);', style='top: 10vh; left: 75vw; position: absolute;')
-      p#player-username(style='color: white; font-size: 1vw;') vipri
+    .player-div(onclick='playerClicked(this);', style='top: 90vh; left: 90vw; position: absolute;')
+      p#player-username.blink(style='color: white; font-size: 1vw;') vipri
       .flip-container
         .flipper.flip
           .front
@@ -19,16 +19,19 @@ block content
             img.card-back-image(src="../assets/images/card-back.png", alt="Player")
   script(src='/assets/js/default.js')  
   script.
-    debugger;
     var krimi = findDiv('krimi'), vipri = findDiv('vipri');
-    setRoleToBack(krimi, 'robber');
+    /*setRoleToBack(krimi, 'robber');*/
     /*setRoleToBack(vipri, 'drunk');*/
     setTimeout(function() {
       
       animationSwitchCards(krimi, vipri);
-      setTimeout(function() {
-        
-        hideRole(krimi);
-        hideRole(vipri);
-      }, 5000);
+      
     }, 3000);
+
+
+    // A lil late
+    setTimeout(function() {
+      
+      hideRole(krimi);
+      hideRole(vipri);
+    }, 4000);

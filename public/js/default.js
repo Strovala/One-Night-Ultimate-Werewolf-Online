@@ -19,6 +19,11 @@ var FUNCS = {
   gas: 'gas'
 }
 
+var EASE = {
+  'gas': '.17,1.33,1,.61',
+  'lagan': '.13,-0.2,.7,1.7'
+}
+
 
 var troublemakerPick = '';
 
@@ -150,7 +155,6 @@ function toogleRoleImage(img) {
 
   var roles = getRoles();
   var roomName = $('#room-name-text').text();
-  debugger;
   socket.emit('toogled-role', {
     roles: roles,
     roomName: roomName
@@ -236,7 +240,7 @@ function playerClicked(div) {
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
       troublemakerPick = clickedUsername;
       playerDiv = findDiv(clickedUsername);
-      startBlinking(playerDiv);
+      startFadeBlinking(playerDiv);
       gameState = STATES.troublemakerActionSwitch;
       audioPlayerClick.play();
     }
@@ -246,7 +250,9 @@ function playerClicked(div) {
   if (gameState == STATES.troublemakerActionSwitch) {
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername) && troublemakerPick != clickedUsername) {
       playerDiv = findDiv(clickedUsername);
-      animationSwitchCards(findDiv(troublemakerPick), playerDiv);
+      var firstPick = findDiv(troublemakerPick);
+      stopFadeBlinking(firstPick);
+      animationSwitchCards(firstPick, playerDiv);
       socket.emit('troublemaker-action', {
         usernamePick: troublemakerPick,
         usernameSwitch: clickedUsername
@@ -316,13 +322,12 @@ function hideRole(playerDiv) {
   }, 600);
 }
 
-
 // If wants to flip before this need to call setRoleToBack
 function animationSwitchCards(firstDiv, secondDiv) {
 
 
-  var firstId = FUNCS.lagan;
-  var secondId = FUNCS.lagan;
+  var firstFunc = FUNCS.lagan;
+  var secondFunc = FUNCS.lagan;
 
   var flipFirst = isRoleOnBack(firstDiv);
   var flipSecond = isRoleOnBack(secondDiv);
@@ -349,12 +354,13 @@ function animationSwitchCards(firstDiv, secondDiv) {
   secondClone.css('left', leftSecond + 'px');
   secondClone.css('zindex', 4);
 
-  $('#content').find('#content').append(firstClone);
-  $('#content').find('#content').append(secondClone);
-
-
-  // $('#content').append(firstClone);
-  // $('#content').append(secondClone);
+  if (0) {
+    $('#content').find('#content').append(firstClone);
+    $('#content').find('#content').append(secondClone);
+  } else {
+    $('#content').append(secondClone);
+    $('#content').append(firstClone);
+  }
 
   // Now clones are on top of cards
   firstDiv.find('.back').css('visibility', 'hidden');
@@ -368,7 +374,7 @@ function animationSwitchCards(firstDiv, secondDiv) {
   secondImg.find('#card-back').attr('src', srcFirst);
 
   if (flipFirst) {
-    firstId = FUNCS.gas;
+    firstFunc = FUNCS.gas;
     var back = secondDiv.find('.back');
     var front = secondDiv.find('.front');
     var cback = firstClone.find('.back');
@@ -378,7 +384,7 @@ function animationSwitchCards(firstDiv, secondDiv) {
     secondDiv.find('.flipper').removeClass('flip');
   }
   if (flipSecond) {
-    secondId = FUNCS.gas;
+    secondFunc = FUNCS.gas;
     var back = firstDiv.find('.back');
     var front = firstDiv.find('.front');
     var cback = secondClone.find('.back');
@@ -400,17 +406,14 @@ function animationSwitchCards(firstDiv, secondDiv) {
     clone.remove();
   }
 
-
   // Animate
-  moveCard(firstId, firstClone, (leftSecond - leftFirst), (topSecond - topFirst), firstDiv, afterAnimation);
+  moveCard('1', firstFunc, firstClone, (leftSecond - leftFirst), (topSecond - topFirst), firstDiv, afterAnimation);
 
-  moveCard(secondId, secondClone, -(leftSecond - leftFirst), -(topSecond - topFirst), secondDiv, afterAnimation);
+  moveCard('2', secondFunc, secondClone, -(leftSecond - leftFirst), -(topSecond - topFirst), secondDiv, afterAnimation);
 }
 
-function moveCard(id, flipper, left, top, div, callback) {
-  var func = '.17,1.33,1,.61';
-  if (id=='lagan')
-    func = '.13,-0.2,.7,1.7';
+function moveCard(id, func, flipper, left, top, div, callback) {
+  var func = EASE[func];
   var styleText = '\
     @keyframes move' + id + ' {\
       from {\
@@ -432,6 +435,23 @@ function moveCard(id, flipper, left, top, div, callback) {
     callback(div, flipper);
   }, 2000);
   // .17,1.33,1,.61
+}
+
+
+function startBlinking(playerDiv) {
+  playerDiv.find('#player-username').addClass('blink');
+}
+
+function stopBlinking(playerDiv) {
+  playerDiv.find('#player-username').removeClass('blink');
+}
+
+function startFadeBlinking(playerDiv) {
+  playerDiv.find('.flipper').addClass('fade');
+}
+
+function stopFadeBlinking(playerDiv) {
+  playerDiv.find('.flipper').removeClass('fade');
 }
 
 var socket = io.connect('http://' + HOST + ':' + PORT);
@@ -530,13 +550,6 @@ socket.on('troublemaker-poll', function (data) {
 
 });
 
-function startBlinking(playerDiv) {
-  playerDiv.find('#player-username').addClass('blink');
-}
-
-function stopBlinking(playerDiv) {
-  playerDiv.find('#player-username').removeClass('blink');
-}
 
 socket.on('drunk-poll', function (data) {
   gameState = data.state;
