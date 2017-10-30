@@ -354,7 +354,7 @@ function animationSwitchCards(firstDiv, secondDiv) {
   secondClone.css('left', leftSecond + 'px');
   secondClone.css('zindex', 4);
 
-  if (0) {
+  if (1) {
     $('#content').find('#content').append(firstClone);
     $('#content').find('#content').append(secondClone);
   } else {

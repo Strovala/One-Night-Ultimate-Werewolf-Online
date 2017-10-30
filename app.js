@@ -175,14 +175,30 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.endRoles = clone(roles);
   this.center = centerCardsNumber;
   this.hasntSeenRole = 0;
+  this.state = STATES.doNothing;
 }
+
+Game.prototype.getState = function Game_getState() {
+  return this.state;
+};
+
+Game.prototype.setState = function Game_setState(state) {
+  this.state = state;
+};
+
+Game.prototype.getPlayersNumber = function Game_getPlayersNumber() {
+  return this.players.toList().length;
+};
+
+Game.prototype.isEmpty = function Game_isEmpty() {
+  return this.getPlayersNumber() == 0;
+};
 
 Game.prototype.getPlayers = function Game_getPlayers(index) {
   var all = this.players.toList();
   if (index != undefined)
     return all[index];
-  else
-    return all;
+  return all;
 };
 
 Game.prototype.addPlayer = function Game_addPlayer(username, player) {
@@ -202,8 +218,20 @@ Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
   return this.roles[username];
 };
 
+Game.prototype.setPlayersPositions = function Game_setPlayersPositions(players) {
+  this.playersPositions = players;
+};
+
+Game.prototype.getPlayersPositions = function Game_getPlayersPositions(players) {
+  return this.playersPositions;
+};
+
 Game.prototype.start = function Game_start(room) {
   var players = room.getPlayersPositions();
+  this.setPlayersPositions(players);
+
+  var state = STATES.roleView;
+  this.setState(state);
 
   // Send clients to start a game
   var that = this;
@@ -213,10 +241,10 @@ Game.prototype.start = function Game_start(room) {
     player.enterGame(room.name);
 
     // Add player to game
-    console.log(player.username);
+    console.log(player.username + ' starting game ' + room.name);
     that.addPlayer(player.username, player);
 
-    sendGamePage(player, players, STATES.roleView);
+    sendGamePage(player, players, state);
   });
 };
 
@@ -257,10 +285,14 @@ Game.prototype.getEndRoles = function Game_getEndRoles() {
 
 Game.prototype.pollIdle = function Game_pollIdle() {
   var allUsernames = this.getAllUsernames();
+
+  var state = STATES.doNothing;
+  this.setState(state);
+
   this.getPlayers().forEach(function (player) {
     player.emit('idle-poll', {
       usernames: allUsernames,
-      state: STATES.doNothing
+      state: state
     });
   });
 };
@@ -268,7 +300,10 @@ Game.prototype.pollIdle = function Game_pollIdle() {
 Game.prototype.pollWerewolf = function Game_pollWerewolf() {
   var players = this.getPlayersWithRole(ROLES.werewolf);
   var playersUsernames = getPlayersUsernames(players);
+
   var state = playersUsernames.length < 2 ? STATES.werewolfAction : STATES.doNothing;
+  this.setState(state);
+
   players.forEach(function (player) {
     player.emit('werewolf-poll', {
       usernames: playersUsernames,
@@ -280,10 +315,14 @@ Game.prototype.pollWerewolf = function Game_pollWerewolf() {
 Game.prototype.pollSeer = function Game_pollSeer() {
   var players = this.getPlayersWithRole(ROLES.seer);
   var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.seerActionOne;
+  this.setState(state);
+
   players.forEach(function (player) {
     player.emit('seer-poll', {
       usernames: playersUsernames,
-      state: STATES.seerActionOne
+      state: state
     });
   });
 };
@@ -291,10 +330,14 @@ Game.prototype.pollSeer = function Game_pollSeer() {
 Game.prototype.pollRobber = function Game_pollRobber() {
   var players = this.getPlayersWithRole(ROLES.robber);
   var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.robberAction;
+  this.setState(state);
+
   players.forEach(function (player) {
     player.emit('robber-poll', {
       usernames: playersUsernames,
-      state: STATES.robberAction
+      state: state
     });
   });
 };
@@ -308,10 +351,14 @@ Game.prototype.robberAction = function Game_robberAction(robberUsername, stolenU
 Game.prototype.pollTroublemaker = function Game_pollTroublemaker() {
   var players = this.getPlayersWithRole(ROLES.troublemaker);
   var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.troublemakerActionPick;
+  this.setState(state);
+
   players.forEach(function (player) {
     player.emit('troublemaker-poll', {
       usernames: playersUsernames,
-      state: STATES.troublemakerActionPick
+      state: state
     });
   });
 };
@@ -325,10 +372,14 @@ Game.prototype.troublemakerAction = function Game_troublemakerAction(usernamePic
 Game.prototype.pollDrunk = function Game_pollDrunk() {
   var players = this.getPlayersWithRole(ROLES.drunk);
   var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.drunkAction;
+  this.setState(state);
+
   players.forEach(function (player) {
     player.emit('drunk-poll', {
       usernames: playersUsernames,
-      state: STATES.drunkAction
+      state: state
     });
   });
 };
@@ -356,9 +407,12 @@ Game.prototype.startPolling = function Game_startPolling() {
 };
 
 Game.prototype.startDiscussion = function Game_startDiscussion() {
+  var state = STATES.discussion;
+  this.setState(state);
+
   this.getPlayers().forEach(function (player) {
     player.emit('start-discussion', {
-      state: STATES.discussion
+      state: state
     });
   });
 };
@@ -388,8 +442,7 @@ Room.prototype.getPlayers = function Room_getPlayers(index) {
   var all = this.players.toList();
   if (index != undefined)
     return all[index];
-  else
-    return all;
+  return all;
 };
 
 Room.prototype.addPlayer = function Room_addPlayer(username, player) {
@@ -559,6 +612,14 @@ function reconnect(username, client) {
       room.addPlayer(client.username, client);
     }
   }
+
+  // if player was in game add him to game
+  if (client.isIn(LOCATIONS.game)) {
+    var game = ROOMS.exists(client.getGame());
+    if (game) {
+      game.addPlayer(client.username, client);
+    }
+  }
 }
 
 function pollAll(pollRoles, ind, callback) {
@@ -598,7 +659,12 @@ function deleteRoom(roomName) {
 }
 
 function deleteGame(gameName) {
+  PLAYERS.toList().forEach(function (player) {
+    if (!player.isConnected())
+      player.goTo(LOCATIONS.lobby);
+  });
 
+  GAMES.delete(gameName);
 }
 
 function sendLobbyPage(player, rooms) {
@@ -618,7 +684,7 @@ function sendLobbyPage(player, rooms) {
   });
 }
 
-function updateLobby() {
+function updateLobby(player) {
   // Create rooms list data to send
   var rooms = ROOMS.toList().map(function (room) {
     return {
@@ -627,12 +693,17 @@ function updateLobby() {
     }
   });
 
-  // Update to players in room that you are not there anymore
-  PLAYERS.toList().forEach(function (player) {
-    if (player.isIn(LOCATIONS.lobby)) {
-      sendLobbyPage(player, rooms);
-    }
-  });
+  if (player != undefined) {
+    sendLobbyPage(player, rooms);
+  } else {
+    // Update to players in room that you are not there anymore
+    PLAYERS.toList().forEach(function (player) {
+      if (player.isIn(LOCATIONS.lobby)) {
+        sendLobbyPage(player, rooms);
+      }
+    });
+  }
+
 }
 
 function sendRoomPage(player, players) {
@@ -650,6 +721,15 @@ function sendRoomPage(player, players) {
   player.emit('update-room', {
     page: page
   });
+}
+
+
+function reconnectToGame(player, gameName) {
+  var game = GAMES.exists(gameName);
+  var players = game.getPlayersPositions();
+  var state = game.getState();
+
+  sendGamePage(player, players, state);
 }
 
 function updateRooms() {
@@ -990,7 +1070,10 @@ io.sockets.on('connection', function (client) {
     if (!client.isAdmin())
       client.removeAdmin();
 
-    console.log('Player with username ' + client.username +  ' admin: ' + client.isAdmin() + ' request to enter a room with name ' + roomName);
+    console.log(
+      'Player with username ' + client.username +  ' admin: ' +
+      client.isAdmin() + ' request to enter a room with name ' + roomName
+    );
 
     // Update client room info
     client.enterRoom(roomName);
@@ -1076,8 +1159,12 @@ io.sockets.on('connection', function (client) {
         uuid: client.getUUID()
       });
 
-      updateLobby();
-      updateRooms();
+      updateLobby(client);
+      if (client.isIn(LOCATIONS.room))
+        updateRoom(client.getRoom());
+      if (client.isIn(LOCATIONS.game))
+        reconnectToGame(client, client.getGame());
+
       return;
     }
 
@@ -1099,7 +1186,6 @@ io.sockets.on('connection', function (client) {
       uuid: client.getUUID()
     });
 
-    updateLobby();
-    updateRooms();
+    updateLobby(client);
   });
 });
