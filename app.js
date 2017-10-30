@@ -177,8 +177,11 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.hasntSeenRole = 0;
 }
 
-Game.prototype.getPlayers = function Game_getPlayers() {
-  return this.players.toList();
+Game.prototype.getPlayers = function Game_getPlayers(index) {
+  if (index)
+    return this.players.toList()[index];
+  else
+    return this.players.toList();
 };
 
 Game.prototype.addPlayer = function Game_addPlayer(username, player) {
