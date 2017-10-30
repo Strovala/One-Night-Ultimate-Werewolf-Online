@@ -178,10 +178,11 @@ var Game = function (gameName, roles, centerCardsNumber) {
 }
 
 Game.prototype.getPlayers = function Game_getPlayers(index) {
-  if (index)
-    return this.players.toList()[index];
+  var all = this.players.toList();
+  if (index != undefined)
+    return all[index];
   else
-    return this.players.toList();
+    return all;
 };
 
 Game.prototype.addPlayer = function Game_addPlayer(username, player) {
@@ -384,10 +385,11 @@ var Room = function (roomName) {
 }
 
 Room.prototype.getPlayers = function Room_getPlayers(index) {
-  if (index)
-    return this.players.toList()[index];
+  var all = this.players.toList();
+  if (index != undefined)
+    return all[index];
   else
-    return this.players.toList();
+    return all;
 };
 
 Room.prototype.addPlayer = function Room_addPlayer(username, player) {
