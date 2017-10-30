@@ -67,7 +67,8 @@ var ROLE_TILES = [
   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
   { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
   { id: ROLES.villager, clicked: false },
-  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false }
+  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
+  { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
 ];
 
 var POSITIONS = [
