@@ -43,7 +43,6 @@ function onGameStart(reconnect) {
     }
   });
 
-
   if (!reconnect) {
     // See role after 3s
     setTimeout(function () {

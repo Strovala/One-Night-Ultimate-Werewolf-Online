@@ -758,14 +758,14 @@ function sendGamePage(player, players, state, reconnect) {
   var page = pug.compileFile('./views/game.pug')({
     reveal: 'Reveal',
     buttonPos: REVEAL_BUTTON_POSITION,
-    playersList: players,
-    reconnect: reconnect
+    playersList: players
   });
 
   // Send client data
   player.emit('start-game', {
     page: page,
-    state: state
+    state: state,
+    reconnect: reconnect
   });
 }
 
