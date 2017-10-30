@@ -380,8 +380,11 @@ var Room = function (roomName) {
   this.roles = ROLE_TILES.slice();
 }
 
-Room.prototype.getPlayers = function Room_getPlayers() {
-  return this.players.toList();
+Room.prototype.getPlayers = function Room_getPlayers(index) {
+  if (index)
+    return this.players.toList()[index];
+  else
+    return this.players.toList();
 };
 
 Room.prototype.addPlayer = function Room_addPlayer(username, player) {
