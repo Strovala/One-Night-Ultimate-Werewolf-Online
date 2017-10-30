@@ -32,7 +32,7 @@ var $username = $('#username');
 
 var gameState;
 
-function onGameStart() {
+function onGameStart(reconnect) {
   var $reveal = $('#reveal');
 
   $reveal.click(function () {
@@ -43,10 +43,13 @@ function onGameStart() {
     }
   });
 
-  // See role after 3s
-  setTimeout(function () {
-    socket.emit('see-role');
-  }, 3000);
+
+  if (!reconnect) {
+    // See role after 3s
+    setTimeout(function () {
+      socket.emit('see-role');
+    }, 3000);
+  }
 
 }
 
@@ -615,6 +618,7 @@ socket.on('start-game-declined', function (data) {
 socket.on('start-game', function (data) {
   console.log('startsss');
   gameState = data.state;
+  var reconnect = data.reconnect;
   var page = $(data.page);
   var content = $.grep(page, function(e) {
     return e.id == 'content';
@@ -622,7 +626,7 @@ socket.on('start-game', function (data) {
   $('#content').html(content);
   // Prepare width for game page
   $('#content').css('width', '100%');
-  onGameStart();
+  onGameStart(reconnect);
 });
 
 socket.on('update-lobby', function (data) {

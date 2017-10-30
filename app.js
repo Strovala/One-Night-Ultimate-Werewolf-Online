@@ -723,13 +723,13 @@ function sendRoomPage(player, players) {
   });
 }
 
-
 function reconnectToGame(player, gameName) {
   var game = GAMES.exists(gameName);
   var players = game.getPlayersPositions();
   var state = game.getState();
 
-  sendGamePage(player, players, state);
+  // Recconect set to true
+  sendGamePage(player, players, state, true);
 }
 
 function updateRooms() {
@@ -753,12 +753,13 @@ function updateRoom(roomName) {
   });
 }
 
-function sendGamePage(player, players, state) {
+function sendGamePage(player, players, state, reconnect) {
   // Compile room page
   var page = pug.compileFile('./views/game.pug')({
     reveal: 'Reveal',
     buttonPos: REVEAL_BUTTON_POSITION,
-    playersList: players
+    playersList: players,
+    reconnect: reconnect
   });
 
   // Send client data
