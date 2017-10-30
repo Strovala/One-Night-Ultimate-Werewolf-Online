@@ -63,7 +63,7 @@ var ROLES = {
 
 var ROLE_TILES = [
   { id: ROLES.werewolf, clicked: false },
-  { id: ROLES.werewolf,     clicked: false },
+  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
   { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
   { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
@@ -314,6 +314,25 @@ Game.prototype.pollWerewolf = function Game_pollWerewolf() {
   });
 };
 
+Game.prototype.pollMinion = function Game_pollMinion() {
+  var players = this.getPlayersWithRole(ROLES.minion);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var werewolfs = this.getPlayersUsernames(ROLES.werewolf);
+  werewolfsUsernames = getPlayersUsernames(werewolfs);
+
+  var state = STATES.doNothing;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('minion-poll', {
+      usernames: playersUsernames,
+      werewolfs: werewolfsUsernames,
+      state: state
+    });
+  });
+};
+
 Game.prototype.pollSeer = function Game_pollSeer() {
   var players = this.getPlayersWithRole(ROLES.seer);
   var playersUsernames = getPlayersUsernames(players);
@@ -396,6 +415,7 @@ Game.prototype.startPolling = function Game_startPolling() {
   var pollRoles = [
     this.pollIdle.bind(this),
     this.pollWerewolf.bind(this),
+    this.pollMinion.bind(this),
     this.pollSeer.bind(this),
     this.pollRobber.bind(this),
     this.pollTroublemaker.bind(this),

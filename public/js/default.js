@@ -478,6 +478,23 @@ socket.on('saw-role-aproved', function (data) {
   hideRole(playerDiv);
 });
 
+socket.on('minion-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+  var werewolfs = data.werewolfs;
+
+  werewolfs.forEach(function (werewolf) {
+    var playerDiv = findDiv(werewolf);
+    startFadeBlinking(playerDiv);
+  });
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
 socket.on('werewolf-poll', function (data) {
   gameState = data.state;
   var usernames = data.usernames;
@@ -574,6 +591,7 @@ socket.on('idle-poll', function (data) {
 
     hideRole(playerDiv);
     stopBlinking(playerDiv);
+    stopFadeBlinking(playerDiv);
   });
 });
 
