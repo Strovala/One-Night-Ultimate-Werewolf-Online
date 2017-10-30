@@ -67,7 +67,7 @@ var ROLE_TILES = [
   { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
   { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
-  { id: ROLES.villager, clicked: false },
+  { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
   { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
   { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
 ];
@@ -319,7 +319,7 @@ Game.prototype.pollMinion = function Game_pollMinion() {
   var players = this.getPlayersWithRole(ROLES.minion);
   var playersUsernames = getPlayersUsernames(players);
 
-  var werewolfs = this.getPlayersUsernames(ROLES.werewolf);
+  var werewolfs = this.getPlayersWithRole(ROLES.werewolf);
   werewolfsUsernames = getPlayersUsernames(werewolfs);
 
   var state = STATES.doNothing;
