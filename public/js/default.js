@@ -11,7 +11,8 @@ var STATES = {
   troublemakerActionPick: 6,
   troublemakerActionSwitch : 7,
   drunkAction: 8,
-  discussion: 9
+  discussion: 9,
+  insomniacAction: 10
 }
 
 var FUNCS = {
@@ -278,6 +279,17 @@ function playerClicked(div) {
     }
     return;
   }
+
+  if (gameState == STATES.insomniacAction) {
+    if (isMyself(clickedUsername)) {
+      socket.emit('insomniac-action', {
+        username: clickedUsername
+      });
+      audioPlayerClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
 }
 
 function findDiv(username) {
@@ -493,6 +505,37 @@ socket.on('minion-poll', function (data) {
     startBlinking(playerDiv);
   });
 
+});
+
+socket.on('mason-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+socket.on('insomniac-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
+socket.on('insomniac-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
 });
 
 socket.on('werewolf-poll', function (data) {

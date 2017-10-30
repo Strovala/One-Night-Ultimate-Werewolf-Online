@@ -127,7 +127,8 @@ var STATES = {
   troublemakerActionPick: 6,
   troublemakerActionSwitch : 7,
   drunkAction: 8,
-  discussion: 9
+  discussion: 9,
+  insomniacAction: 10
 }
 
 function clone(obj) {
@@ -217,7 +218,7 @@ Game.prototype.allSeenRoles = function Game_allSeenRoles() {
 };
 
 Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
-  return this.roles[username];
+  return this.endRoles[username];
 };
 
 Game.prototype.setPlayersPositions = function Game_setPlayersPositions(players) {
@@ -333,6 +334,36 @@ Game.prototype.pollMinion = function Game_pollMinion() {
   });
 };
 
+Game.prototype.pollInsomniac = function Game_pollInsomniac() {
+  var players = this.getPlayersWithRole(ROLES.insomniac);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.insomniacAction;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('insomniac-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+};
+
+Game.prototype.pollMason = function Game_pollMason() {
+  var players = this.getPlayersWithRole(ROLES.mason);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.doNothing;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('mason-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+};
+
 Game.prototype.pollSeer = function Game_pollSeer() {
   var players = this.getPlayersWithRole(ROLES.seer);
   var playersUsernames = getPlayersUsernames(players);
@@ -416,10 +447,12 @@ Game.prototype.startPolling = function Game_startPolling() {
     this.pollIdle.bind(this),
     this.pollWerewolf.bind(this),
     this.pollMinion.bind(this),
+    this.pollMason.bind(this),
     this.pollSeer.bind(this),
     this.pollRobber.bind(this),
     this.pollTroublemaker.bind(this),
-    this.pollDrunk.bind(this)
+    this.pollDrunk.bind(this),
+    this.pollInsomniac.bind(this)
   ];
   var that = this;
   pollAll(pollRoles, 1, function () {
@@ -984,6 +1017,21 @@ io.sockets.on('connection', function (client) {
     var role = game.getPlayerRole(clickedCard);
 
     client.emit('werewolf-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
+  });
+
+  client.on('insomniac-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Insomniac action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.getGame());
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('insomniac-action-aproved', {
       username: clickedCard,
       role: role
     });
