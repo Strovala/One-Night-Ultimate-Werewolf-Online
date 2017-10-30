@@ -1,4 +1,4 @@
-var HOST = '192.168.0.219';
+var HOST = '62.75.159.242';
 var PORT = 3000;
 
 var STATES = {
