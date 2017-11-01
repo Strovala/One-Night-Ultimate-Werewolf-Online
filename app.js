@@ -10,6 +10,14 @@ var
     verbose         = false,
     app             = express();
 
+var fs = require('fs');
+var access = fs.createWriteStream(__dirname + '/debug.log');
+process.stdout.write = process.stderr.write = access.write.bind(access);
+
+process.on('uncaughtException', function(err) {
+  console.error((err && err.stack) ? err.stack : err);
+});
+
 var server = app.listen(gameport);
 
 console.log('\t :: Express :: Listening on port ' + gameport );
