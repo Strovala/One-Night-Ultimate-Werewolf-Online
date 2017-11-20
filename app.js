@@ -939,7 +939,6 @@ io.sockets.on('connection', function (client) {
         deleteRoom(room.name);
       }
     }
-
     var game = GAMES.exists(client.gameName);
     if (game) {
       console.log(client.gameName);
