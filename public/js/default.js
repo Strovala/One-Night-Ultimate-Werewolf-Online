@@ -41,7 +41,6 @@ function onGameStart(reconnect) {
       socket.emit('reveal');
       audioClick.play();
       gameState = STATES.doNothing;
-      // Change reveal text toBack to lobby
     } else {
       socket.emit('back_to_lobby')
       audioClick.play();
@@ -644,7 +643,7 @@ socket.on('idle-poll', function (data) {
 
 socket.on('start-discussion', function (data) {
   gameState = data.state;
-  // Change reveal text to reveal
+  $('#reveal').text(data.buttonName)
 });
 
 socket.on('reveal-aproved', function (data) {
@@ -655,6 +654,7 @@ socket.on('reveal-aproved', function (data) {
     revealRole(playerDiv, player.role);
   });
   gameState = STATES.doNothing;
+  $('#reveal').text('Back to lobby')
 });
 
 socket.on('new-room-declined', function(data) {

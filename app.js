@@ -475,7 +475,8 @@ Game.prototype.startDiscussion = function Game_startDiscussion() {
 
   this.getPlayers().forEach(function (player) {
     player.emit('start-discussion', {
-      state: state
+      state: state,
+      buttonName: 'Reveal'
     });
   });
 };
