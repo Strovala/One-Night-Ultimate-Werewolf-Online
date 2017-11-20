@@ -940,11 +940,9 @@ io.sockets.on('connection', function (client) {
       }
     }
 
-    var game = GAMES.exists(client.gameName);
+    var game = GAMES.exists(client.getGame());
     if (game) {
-      console.log(client.gameName);
         game.getPlayers().forEach(function (player) {
-          console.log(player.username);
           player.goTo(LOCATIONS.lobby);
         });
         GAMES.delete(game.name);
