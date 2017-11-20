@@ -4,7 +4,7 @@ block content
     - var players= playersList
     - var button= buttonPos
     - var buttonAttributes = {}
-    - buttonAttributes.style = 'top: ' + button.top + 'vh; left: ' + button.left + 'vw; position: absolute; display: none';
+    - buttonAttributes.style = 'top: ' + button.top + 'vh; left: ' + button.left + 'vw; position: absolute; display: block';
       #div-reveal(style='text-align: left; height: 1.5em;')&attributes(buttonAttributes)
         button#reveal(type='button')= reveal
     each player in players
@@ -13,7 +13,7 @@ block content
       - var divAttributes = {}
       - divAttributes.style = 'top: ' + top + 'vh; left: ' + left + 'vw; position: absolute;'
       - var username = player.username
-      - var dontDisplay = username == 'c1' || username == 'c2' || username == 'c3' || username == 'c4' 
+      - var dontDisplay = username == 'c1' || username == 'c2' || username == 'c3' || username == 'c4'
       - var usernameAttributes = {}
       - if (dontDisplay) usernameAttributes.style = 'display: none;'
       .player-div(onclick='playerClicked(this);')&attributes(divAttributes)

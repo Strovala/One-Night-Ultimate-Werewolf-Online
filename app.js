@@ -480,6 +480,10 @@ Game.prototype.startDiscussion = function Game_startDiscussion() {
   });
 };
 
+Game.prototype.deletePlayer = function Game_deletePlayer(username) {
+  this.players.delete(username);
+};
+
 Game.prototype.reveal = function Game_reveal() {
   var endRoles = this.getEndRoles();
 
@@ -816,10 +820,10 @@ function updateRoom(roomName) {
   });
 }
 
-function sendGamePage(player, players, state, reconnect) {
+function sendGamePage(player, players, state, reconnect, reveal) {
   // Compile room page
   var page = pug.compileFile('./views/game.pug')({
-    reveal: 'Reveal',
+    reveal: 'Back to lobby',
     buttonPos: REVEAL_BUTTON_POSITION,
     playersList: players
   });
@@ -925,6 +929,18 @@ io.sockets.on('connection', function (client) {
   client.isAdmin = function () {
     return this.data.admin;
   }
+
+  client.on('back_to_lobby', function () {
+    var game = GAMES.exists(client.getGame());
+    if (game) {
+      game.deletePlayer(client.username);
+      if (game.isEmpty()) {
+        deleteGame(game.name)
+      }
+      client.goTo(LOCATIONS.lobby);
+    }
+    updateLobby(client);
+  })
 
   client.on('disconnect', function () {
     client.disconnect();

@@ -41,6 +41,10 @@ function onGameStart(reconnect) {
       socket.emit('reveal');
       audioClick.play();
       gameState = STATES.doNothing;
+      // Change reveal text toBack to lobby
+    } else {
+      socket.emit('back_to_lobby')
+      audioClick.play();
     }
   });
 
@@ -640,7 +644,7 @@ socket.on('idle-poll', function (data) {
 
 socket.on('start-discussion', function (data) {
   gameState = data.state;
-  $('#div-reveal').css('display', 'block');
+  // Change reveal text to reveal
 });
 
 socket.on('reveal-aproved', function (data) {
