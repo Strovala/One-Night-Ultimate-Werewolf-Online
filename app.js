@@ -217,15 +217,20 @@ Game.prototype.getPlayers = function Game_getPlayers(index) {
 Game.prototype.addPlayer = function Game_addPlayer(username, player, reconnect) {
   this.players.add(username, player);
   if (reconnect == undefined)
-    this.hasntSeenRole++;
+    player.data.hasntSeenRole = true;
 };
 
-Game.prototype.sawRole = function Game_sawRole() {
-  this.hasntSeenRole--;
+Game.prototype.sawRole = function Game_sawRole(player) {
+  player.data.hasntSeenRole = false;
 };
 
 Game.prototype.allSeenRoles = function Game_allSeenRoles() {
-  return this.hasntSeenRole == 0;
+  var sawRole = 0;
+  this.getPlayers().forEach(function (player) {
+    if (player.data.hasntSeenRole)
+      sawRole++;
+  })
+  return sawRole == this.getPlayersNumber();
 };
 
 Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
@@ -813,6 +818,14 @@ function reconnectToGame(player, gameName) {
 
   // Recconect set to true
   sendGamePage(player, players, state, true);
+
+  if (player.data.hasntSeenRole) {
+    var role = game.getPlayerRole(username);
+    player.emit('see-role-aproved', {
+      username: username,
+      role: role
+    });
+  }
 }
 
 function updateRooms() {
@@ -1082,7 +1095,7 @@ io.sockets.on('connection', function (client) {
 
     // Get the game
     var game = GAMES.exists(gameName);
-    game.sawRole();
+    game.sawRole(client);
     client.emit('saw-role-aproved');
     if (game.allSeenRoles()) {
       game.startPolling();
