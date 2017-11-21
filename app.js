@@ -229,11 +229,9 @@ Game.prototype.allSeenRoles = function Game_allSeenRoles() {
   this.getPlayers().forEach(function (player) {
     if (player.data.hasntSeenRole) {
       sawRole++;
-      console.log(player.username);
     }
   })
-  console.log(sawRole);
-  return sawRole == this.getPlayersNumber();
+  return sawRole == 0;
 };
 
 Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
