@@ -227,9 +227,12 @@ Game.prototype.sawRole = function Game_sawRole(player) {
 Game.prototype.allSeenRoles = function Game_allSeenRoles() {
   var sawRole = 0;
   this.getPlayers().forEach(function (player) {
-    if (player.data.hasntSeenRole)
+    if (player.data.hasntSeenRole) {
       sawRole++;
+      console.log(player.username);
+    }
   })
+  console.log(sawRole);
   return sawRole == this.getPlayersNumber();
 };
 
