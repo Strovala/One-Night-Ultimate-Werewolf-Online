@@ -688,12 +688,12 @@ function reconnect(username, client) {
     if (game) {
       game.getPlayers().forEach(function (player) {
         console.log(player.id);
-      }
+      });
       game.addPlayer(client.username, client);
 
         game.getPlayers().forEach(function (player) {
           console.log(player.id);
-        }
+        });
     }
   }
 }
