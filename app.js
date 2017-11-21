@@ -820,9 +820,9 @@ function reconnectToGame(player, gameName) {
   sendGamePage(player, players, state, true);
 
   if (player.data.hasntSeenRole) {
-    var role = game.getPlayerRole(username);
+    var role = game.getPlayerRole(player.username);
     player.emit('see-role-aproved', {
-      username: username,
+      username: player.username,
       role: role
     });
   }
