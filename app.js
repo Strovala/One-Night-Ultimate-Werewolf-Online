@@ -161,8 +161,10 @@ Players.prototype.getData = function (username) {
 
 Players.prototype.add = function Players_add(username, client, data) {
   client.username = username;
-  if (data)
+  if (data) {
+    console.log(data);
     client.data = data;
+  }
   this[username] = client;
 }
 
@@ -686,6 +688,7 @@ function reconnect(username, client) {
   if (client.isIn(LOCATIONS.game)) {
     console.log("in game");
     var game = ROOMS.exists(client.getGame());
+        console.log("Game exitst" + client.getGame() + "SKRAAA");
     if (game) {
       console.log("Game exitst" + client.getGame() + "SKRAAA");
       game.getPlayers().forEach(function (player) {
