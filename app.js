@@ -163,11 +163,7 @@ Players.prototype.add = function Players_add(username, client, data) {
   client.username = username;
   if (data)
     client.data = data;
-  console.log("Adding player");
-  if (this[username])
-    console.log(this[username].id);
   this[username] = client;
-  console.log(this[username].id);
 }
 
 Players.prototype.delete = function Players_delete(username) {
@@ -1259,6 +1255,13 @@ io.sockets.on('connection', function (client) {
         username: client.username,
         uuid: client.getUUID()
       });
+
+      var game = GAMES.exists(client.getGame())
+      if (game) {
+        game.getPlayers().forEach(function (player) {
+          console.log(player.id);
+        })
+      }
 
       updateLobby(client);
       if (client.isIn(LOCATIONS.room))
