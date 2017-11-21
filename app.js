@@ -1254,6 +1254,9 @@ io.sockets.on('connection', function (client) {
 
     console.log(client.id + ' requested login with username ' + data.username);
     var username = data.username || '';
+    var words = []
+    username.split(' ').forEach(function(word) { if (word) words.push(word); })
+    username = words.join(' ')
     // Check is username valid
     username = username.toLowerCase();
     // If someone sent us a postman-like request, because on client we checked this
