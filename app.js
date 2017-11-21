@@ -489,7 +489,7 @@ Game.prototype.reveal = function Game_reveal() {
   var endRoles = this.getEndRoles();
 
   this.getPlayers().forEach(function (player) {
-    console.log(player.username);
+    console.log(player.id);
     player.emit('reveal-aproved', {
       players: endRoles
     });
@@ -793,6 +793,7 @@ function sendRoomPage(player, players) {
 }
 
 function reconnectToGame(player, gameName) {
+  console.log(player.id);
   var game = GAMES.exists(gameName);
   var players = game.getPlayersPositions();
   var state = game.getState();
