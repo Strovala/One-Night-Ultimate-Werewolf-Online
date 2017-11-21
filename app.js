@@ -687,7 +687,7 @@ function reconnect(username, client) {
   // if player was in game add him to game
   if (client.isIn(LOCATIONS.game)) {
     console.log("in game");
-    var game = ROOMS.exists(client.getGame());
+    var game = GAMES.exists(client.getGame());
         console.log("Game exitst" + client.getGame() + "SKRAAA");
     if (game) {
       console.log("Game exitst" + client.getGame() + "SKRAAA");
