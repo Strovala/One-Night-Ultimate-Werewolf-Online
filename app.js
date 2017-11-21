@@ -821,7 +821,7 @@ function updateRoom(roomName) {
   });
 }
 
-function sendGamePage(player, players, state, reconnect, reveal) {
+function sendGamePage(player, players, state, reconnect) {
   // Compile room page
   var page = pug.compileFile('./views/game.pug')({
     reveal: 'Back to lobby',
@@ -958,10 +958,10 @@ io.sockets.on('connection', function (client) {
     }
     var game = GAMES.exists(client.getGame());
     if (game) {
-        game.getPlayers().forEach(function (player) {
-          player.goTo(LOCATIONS.lobby);
-        });
-        GAMES.delete(game.name);
+      console.log(game.getPlayersNumber() + " for game " + game.name);
+      if (game.isEmpty()) {
+        deleteGame(game.name)
+      }
     }
 
     updateLobby();
