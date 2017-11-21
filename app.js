@@ -214,9 +214,10 @@ Game.prototype.getPlayers = function Game_getPlayers(index) {
   return all;
 };
 
-Game.prototype.addPlayer = function Game_addPlayer(username, player) {
+Game.prototype.addPlayer = function Game_addPlayer(username, player, reconnect) {
   this.players.add(username, player);
-  this.hasntSeenRole++;
+  if (reconnect == undefined)
+    this.hasntSeenRole++;
 };
 
 Game.prototype.sawRole = function Game_sawRole() {
@@ -694,7 +695,7 @@ function reconnect(username, client) {
       game.getPlayers().forEach(function (player) {
         console.log(player.id);
       });
-      game.addPlayer(client.username, client);
+      game.addPlayer(client.username, client, true);
 
         game.getPlayers().forEach(function (player) {
           console.log(player.id);
