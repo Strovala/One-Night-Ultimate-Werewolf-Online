@@ -163,7 +163,11 @@ Players.prototype.add = function Players_add(username, client, data) {
   client.username = username;
   if (data)
     client.data = data;
+  console.log("Adding player");
+  if (this[username])
+    console.log(this[username].id);
   this[username] = client;
+  console.log(this[username].id);
 }
 
 Players.prototype.delete = function Players_delete(username) {
