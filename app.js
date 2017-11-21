@@ -686,7 +686,14 @@ function reconnect(username, client) {
   if (client.isIn(LOCATIONS.game)) {
     var game = ROOMS.exists(client.getGame());
     if (game) {
+      game.getPlayers().forEach(function (player) {
+        console.log(player.id);
+      }
       game.addPlayer(client.username, client);
+
+        game.getPlayers().forEach(function (player) {
+          console.log(player.id);
+        }
     }
   }
 }
@@ -1255,13 +1262,6 @@ io.sockets.on('connection', function (client) {
         username: client.username,
         uuid: client.getUUID()
       });
-
-      var game = GAMES.exists(client.getGame())
-      if (game) {
-        game.getPlayers().forEach(function (player) {
-          console.log(player.id);
-        })
-      }
 
       updateLobby(client);
       if (client.isIn(LOCATIONS.room))
