@@ -489,6 +489,7 @@ Game.prototype.reveal = function Game_reveal() {
   var endRoles = this.getEndRoles();
 
   this.getPlayers().forEach(function (player) {
+    console.log(player.username);
     player.emit('reveal-aproved', {
       players: endRoles
     });
@@ -958,7 +959,7 @@ io.sockets.on('connection', function (client) {
     }
     var game = GAMES.exists(client.getGame());
     if (game) {
-      console.log(game.getPlayersNumber() + " for game " + game.name);
+      console.log(game.getPlayersNumber() + " for game " + client.getGame());
       if (game.isEmpty()) {
         deleteGame(game.name)
       }
