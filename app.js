@@ -194,7 +194,7 @@ Game.prototype.getPlayerRole = function Game_getPlayerRole(username) {
 
 Game.prototype.start = function Game_start(room) {
   var players = room.getPlayersPositions();
-
+  this.selectedRoles = room.selectedRoles;
   // Send clients to start a game
   var that = this;
   room.getPlayers().forEach(function (player) {
@@ -329,6 +329,7 @@ Game.prototype.drunkAction = function Game_drunkAction(drunkUsername, stolenUser
 };
 
 Game.prototype.startPolling = function Game_startPolling() {
+  console.log(this.selectedRoles);
   var pollRoles = [
     this.pollIdle.bind(this),
     this.pollWerewolf.bind(this),
