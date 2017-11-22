@@ -476,20 +476,18 @@ Game.prototype.determineRoles = function Game_determineRoles() {
 };
 
 Game.prototype.startPolling = function Game_startPolling() {
-  console.log(this.selectedRoles);
-  console.log(this.pollMethods['werewolf']);
+  var selectedRoles = this.selectedRoles.map(function (role) {
+    return role.id;
+  });
+  console.log(selectedRoles);
   var pollRoles = [
-    this.pollIdle.bind(this),
-    this.pollMethods['werewolf'].bind(this),
-    this.pollMinion.bind(this),
-    this.pollMason.bind(this),
-    this.pollSeer.bind(this),
-    this.pollRobber.bind(this),
-    this.pollTroublemaker.bind(this),
-    this.pollDrunk.bind(this),
-    this.pollInsomniac.bind(this)
+    this.pollIdle.bind(this)
   ];
   var that = this;
+  selectedRoles.forEach(function (role) {
+    pollRoles.push(this.pollMethods[role].bind(that));
+  });
+  console.log(pollRoles);
   pollAll(pollRoles, 1, function () {
     that.startDiscussion();
     console.log('Discussion started');
