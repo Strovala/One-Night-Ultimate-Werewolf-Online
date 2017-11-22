@@ -70,7 +70,7 @@ var ROLES = {
 // ];
 
 var ROLE_TILES = [
-  { id: ROLES.werewolf, clicked: false },
+  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf, clicked: false },
   { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
   { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
