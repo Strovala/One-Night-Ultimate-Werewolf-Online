@@ -191,6 +191,7 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.hasntSeenRole = 0;
   this.state = STATES.doNothing;
   this.pollMethods = {
+    doppelganger: this.pollDoppelganger,
     werewolf:     this.pollWerewolf,
     minion:       this.pollMinion,
     mason:        this.pollMason,
