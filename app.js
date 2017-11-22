@@ -1092,8 +1092,7 @@ io.sockets.on('connection', function (client) {
 
     client.emit('doppelganger-action-aproved', {
       username: clickedCard,
-      role: role,
-      state: state
+      role: role
     });
   });
 

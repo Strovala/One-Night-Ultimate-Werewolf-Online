@@ -602,8 +602,6 @@ socket.on('doppelganger-action-aproved', function (data) {
   var playerDiv = findDiv(username);
 
   revealRole(playerDiv, role);
-
-  gameState = data.state;
 });
 
 socket.on('seer-action-aproved', function (data) {
