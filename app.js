@@ -136,7 +136,8 @@ var STATES = {
   troublemakerActionSwitch : 7,
   drunkAction: 8,
   discussion: 9,
-  insomniacAction: 10
+  insomniacAction: 10,
+  doppelgangerAction: 11
 }
 
 function clone(obj) {
@@ -329,8 +330,8 @@ Game.prototype.pollIdle = function Game_pollIdle() {
   });
 };
 
-Game.prototype.pollWerewolf = function Game_pollWerewolf() {
-  var players = this.getPlayersWithRole(ROLES.werewolf);
+Game.prototype.pollWerewolf = function Game_pollWerewolf(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.werewolf) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = playersUsernames.length < 2 ? STATES.werewolfAction : STATES.doNothing;
@@ -344,8 +345,8 @@ Game.prototype.pollWerewolf = function Game_pollWerewolf() {
   });
 };
 
-Game.prototype.pollMinion = function Game_pollMinion() {
-  var players = this.getPlayersWithRole(ROLES.minion);
+Game.prototype.pollMinion = function Game_pollMinion(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.minion) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var werewolfs = this.getPlayersWithRole(ROLES.werewolf);
@@ -363,8 +364,8 @@ Game.prototype.pollMinion = function Game_pollMinion() {
   });
 };
 
-Game.prototype.pollInsomniac = function Game_pollInsomniac() {
-  var players = this.getPlayersWithRole(ROLES.insomniac);
+Game.prototype.pollInsomniac = function Game_pollInsomniac(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.insomniac) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = STATES.insomniacAction;
@@ -378,8 +379,8 @@ Game.prototype.pollInsomniac = function Game_pollInsomniac() {
   });
 };
 
-Game.prototype.pollMason = function Game_pollMason() {
-  var players = this.getPlayersWithRole(ROLES.mason);
+Game.prototype.pollMason = function Game_pollMason(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.mason) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = STATES.doNothing;
@@ -393,8 +394,8 @@ Game.prototype.pollMason = function Game_pollMason() {
   });
 };
 
-Game.prototype.pollSeer = function Game_pollSeer() {
-  var players = this.getPlayersWithRole(ROLES.seer);
+Game.prototype.pollSeer = function Game_pollSeer(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.seer) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = STATES.seerActionOne;
@@ -408,8 +409,8 @@ Game.prototype.pollSeer = function Game_pollSeer() {
   });
 };
 
-Game.prototype.pollRobber = function Game_pollRobber() {
-  var players = this.getPlayersWithRole(ROLES.robber);
+Game.prototype.pollRobber = function Game_pollRobber(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.robber) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = STATES.robberAction;
@@ -429,8 +430,8 @@ Game.prototype.robberAction = function Game_robberAction(robberUsername, stolenU
   this.endRoles[robberUsername] = stolenRole;
 };
 
-Game.prototype.pollTroublemaker = function Game_pollTroublemaker() {
-  var players = this.getPlayersWithRole(ROLES.troublemaker);
+Game.prototype.pollTroublemaker = function Game_pollTroublemaker(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.troublemaker) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = STATES.troublemakerActionPick;
@@ -450,8 +451,8 @@ Game.prototype.troublemakerAction = function Game_troublemakerAction(usernamePic
   this.endRoles[usernameSwitch] = switchedRole;
 };
 
-Game.prototype.pollDrunk = function Game_pollDrunk() {
-  var players = this.getPlayersWithRole(ROLES.drunk);
+Game.prototype.pollDrunk = function Game_pollDrunk(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.drunk) : this.getPlayersWithRole(ROLES.doppelganger);
   var playersUsernames = getPlayersUsernames(players);
 
   var state = STATES.drunkAction;
@@ -471,8 +472,19 @@ Game.prototype.drunkAction = function Game_drunkAction(drunkUsername, stolenUser
   this.endRoles[drunkUsername] = stolenRole;
 };
 
-Game.prototype.determineRoles = function Game_determineRoles() {
+Game.prototype.pollDoppelganger = function Game_pollDoppelganger() {
+  var players = this.getPlayersWithRole(ROLES.doppelganger);
+  var playersUsernames = getPlayersUsernames(players);
 
+  var state = STATES.doppelgangerAction;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('doppelganger-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
 };
 
 Game.prototype.startPolling = function Game_startPolling() {
@@ -481,7 +493,6 @@ Game.prototype.startPolling = function Game_startPolling() {
     if (selectedRoles.indexOf(role.id) < 0)
       selectedRoles.push(role.id);
   });
-  console.log(selectedRoles);
   var pollRoles = [
     this.pollIdle.bind(this)
   ];
@@ -1061,6 +1072,28 @@ io.sockets.on('connection', function (client) {
     // Switch robber and clicked card roles
     // because its R O B B E R
     game.robberAction(client.username, clickedCard);
+  });
+
+  client.on('doppelganger-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Doppelganger action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.getGame());
+    var role = game.getPlayerRole(clickedCard);
+    var callback = game.pollMethods[role].bind(game);
+    console.log(callback);
+    setTimeout(function () {
+      game.pollIdle();
+      callback(true);
+    }, 2000);
+
+    client.emit('doppelganger-action-aproved', {
+      username: clickedCard,
+      role: role,
+      state: state
+    });
   });
 
   client.on('seer-action', function (data) {

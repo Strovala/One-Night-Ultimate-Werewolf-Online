@@ -12,7 +12,8 @@ var STATES = {
   troublemakerActionSwitch : 7,
   drunkAction: 8,
   discussion: 9,
-  insomniacAction: 10
+  insomniacAction: 10,
+  doppelgangerAction: 11
 }
 
 var FUNCS = {
@@ -192,6 +193,17 @@ function playerClicked(div) {
   if (gameState == STATES.roleView) {
     if (isMyself(clickedUsername)) {
       socket.emit('saw-role');
+      audioPlayerClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.doppelgangerAction) {
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
+      socket.emit('doppelganger-action', {
+        username: clickedUsername
+      });
       audioPlayerClick.play();
       gameState = STATES.doNothing;
     }
@@ -493,6 +505,17 @@ socket.on('saw-role-aproved', function (data) {
   hideRole(playerDiv);
 });
 
+socket.on('doppelganger-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
 socket.on('minion-poll', function (data) {
   gameState = data.state;
   var usernames = data.usernames;
@@ -570,6 +593,17 @@ socket.on('seer-poll', function (data) {
     startBlinking(playerDiv);
   });
 
+});
+
+socket.on('doppelganger-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+
+  gameState = data.state;
 });
 
 socket.on('seer-action-aproved', function (data) {
