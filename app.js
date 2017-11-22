@@ -485,7 +485,8 @@ Game.prototype.startPolling = function Game_startPolling() {
   ];
   var that = this;
   selectedRoles.forEach(function (role) {
-    pollRoles.push(that.pollMethods[role].bind(that));
+    if (that.pollMethods[role])
+      pollRoles.push(that.pollMethods[role].bind(that));
   });
   console.log(pollRoles);
   pollAll(pollRoles, 1, function () {
