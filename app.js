@@ -462,6 +462,7 @@ Game.prototype.drunkAction = function Game_drunkAction(drunkUsername, stolenUser
 };
 
 Game.prototype.startPolling = function Game_startPolling() {
+  console.log(this.selectedRoles);
   var pollRoles = [
     this.pollIdle.bind(this),
     this.pollWerewolf.bind(this),
