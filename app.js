@@ -253,6 +253,8 @@ Game.prototype.start = function Game_start(room) {
   var state = STATES.roleView;
   this.setState(state);
 
+  this.selectedRoles = room.selectedRoles;
+
   // Send clients to start a game
   var that = this;
   room.getPlayers().forEach(function (player) {
