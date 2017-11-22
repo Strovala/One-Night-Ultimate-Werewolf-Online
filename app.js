@@ -499,9 +499,14 @@ Game.prototype.startPolling = function Game_startPolling() {
   ];
   var that = this;
   selectedRoles.forEach(function (role) {
-    if (that.pollMethods[role])
+    if (that.pollMethods[role]) {
+      if (role == 'insomniac' && selectedRoles.indexOf('doppelganger') >= 0) {
+          pollRoles.push(that.pollMethods[role].bind(that, true));
+      }
       pollRoles.push(that.pollMethods[role].bind(that));
+    }
   });
+  console.log(pollRoles);
   pollAll(pollRoles, 1, function () {
     that.startDiscussion();
     console.log('Discussion started');
@@ -1083,13 +1088,14 @@ io.sockets.on('connection', function (client) {
     // Get role of clicked card
     var game = GAMES.exists(client.getGame());
     var role = game.getPlayerRole(clickedCard);
-    var callback = game.pollMethods[role].bind(game);
-    console.log(callback);
-    setTimeout(function () {
-      game.pollIdle();
-      callback(true);
-    }, 2000);
-
+    if (game.pollMethods[role])
+      var callback = game.pollMethods[role].bind(game);
+    if (role != 'insomniac')
+      setTimeout(function () {
+        game.pollIdle();
+        callback(true);
+      }, 2000);
+    client.data.doppelgangerRole = role;
     client.emit('doppelganger-action-aproved', {
       username: clickedCard,
       role: role
