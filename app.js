@@ -189,6 +189,16 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.center = centerCardsNumber;
   this.hasntSeenRole = 0;
   this.state = STATES.doNothing;
+  this.pollMethods = {
+    werewolf:     this.pollWerewolf,
+    minion:       this.pollMinion,
+    mason:        this.pollMason,
+    seer:         this.pollSeer,
+    robber:       this.pollRobber,
+    troublemaker: this.pollTroublemaker,
+    drunk:        this.pollDrunk,
+    insomniac:    this.pollInsomniac
+  }
 }
 
 Game.prototype.getState = function Game_getState() {
@@ -461,11 +471,16 @@ Game.prototype.drunkAction = function Game_drunkAction(drunkUsername, stolenUser
   this.endRoles[drunkUsername] = stolenRole;
 };
 
+Game.prototype.determineRoles = function Game_determineRoles() {
+
+};
+
 Game.prototype.startPolling = function Game_startPolling() {
   console.log(this.selectedRoles);
+  console.log(this.pollMethods['werewolf']);
   var pollRoles = [
-    Game_pollIdle.bind(this),
-    this.pollWerewolf.bind(this),
+    this.pollIdle.bind(this),
+    this.pollMethods['werewolf'].bind(this),
     this.pollMinion.bind(this),
     this.pollMason.bind(this),
     this.pollSeer.bind(this),
