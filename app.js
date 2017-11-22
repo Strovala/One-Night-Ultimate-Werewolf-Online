@@ -476,8 +476,10 @@ Game.prototype.determineRoles = function Game_determineRoles() {
 };
 
 Game.prototype.startPolling = function Game_startPolling() {
-  var selectedRoles = this.selectedRoles.map(function (role) {
-    return role.id;
+  var selectedRoles = [];
+  this.selectedRoles.forEach(function (role) {
+    if (selectedRoles.indexOf(role.id) < 0)
+      selectedRoles.push(role.id);
   });
   console.log(selectedRoles);
   var pollRoles = [
@@ -485,10 +487,9 @@ Game.prototype.startPolling = function Game_startPolling() {
   ];
   var that = this;
   selectedRoles.forEach(function (role) {
-    if (that.pollMethods[role])
+    if (that.pollMethods[role] && )
       pollRoles.push(that.pollMethods[role].bind(that));
   });
-  console.log(pollRoles);
   pollAll(pollRoles, 1, function () {
     that.startDiscussion();
     console.log('Discussion started');
