@@ -1188,8 +1188,11 @@ io.sockets.on('connection', function (client) {
   client.on('start-game-request', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
-    var centerCardsNumber = getCenterCardsNumber(roles);
-    console.log(roles);
+    var selectedRoles = data.roles.map(function (role) {
+      return role.id;
+    });
+    var centerCardsNumber = getCenterCardsNumber(selectedRoles);
+    console.log(selectedRoles);
     console.log(centerCardsNumber);
 
     // Check if there is a valid number of players
