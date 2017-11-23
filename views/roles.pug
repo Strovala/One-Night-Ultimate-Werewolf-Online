@@ -1,12 +1,11 @@
 table
   - var roles= rolesList
   -
-    var rows = [
-      roles.slice(0, 4),
-      roles.slice(4, 8),
-      roles.slice(8, 12),
-      roles.slice(12, 16)
-    ];
+    var rows = []
+    for (var i = 0; i < rolesList.length; i+=4) {
+      rows.append(roles.slice(i, i + 4));
+    }
+    console.log(rows);
   each row in rows
     tr
     each role in row
