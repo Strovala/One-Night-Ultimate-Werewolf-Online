@@ -138,7 +138,9 @@ var STATES = {
   alphaWolfAction: 12,
   mysticWolfAction: 13,
   witchActionPick: 14,
-  witchActionSwitch: 15
+  witchActionSwitch: 15,
+  piActionOne: 16,
+  piActionTwo: 17
 }
 
 function clone(obj) {
@@ -199,6 +201,7 @@ var Game = function (gameName, roles, centerCardsNumber) {
     minion:       this.pollMinion,
     mason:        this.pollMason,
     seer:         this.pollSeer,
+    pi:           this.pollPi,
     robber:       this.pollRobber,
     witch:        this.pollWitch,
     troublemaker: this.pollTroublemaker,
@@ -394,6 +397,21 @@ Game.prototype.pollInsomniac = function Game_pollInsomniac(doppelganger) {
 
   players.forEach(function (player) {
     player.emit('insomniac-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+};
+
+Game.prototype.pollPi = function Game_pollPi(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.pi) : this.getPlayersWithRole(ROLES.doppelganger);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.piActionOne;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('pi-poll', {
       usernames: playersUsernames,
       state: state
     });
@@ -1176,6 +1194,21 @@ io.sockets.on('connection', function (client) {
       }, 2000);
     client.data.doppelgangerRole = role;
     client.emit('doppelganger-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
+  });
+
+  client.on('pi-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Pi action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.getGame());
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('pi-action-aproved', {
       username: clickedCard,
       role: role
     });

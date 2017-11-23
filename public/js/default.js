@@ -17,7 +17,9 @@ var STATES = {
   alphaWolfAction: 12,
   mysticWolfAction: 13,
   witchActionPick: 14,
-  witchActionSwitch: 15
+  witchActionSwitch: 15,
+  piActionOne: 16,
+  piActionTwo: 17
 }
 
 var FUNCS = {
@@ -33,6 +35,7 @@ var EASE = {
 
 var troublemakerPick = '';
 var witchPick = '';
+var piPick = '';
 
 var $start = $('#start');
 var $username = $('#username');
@@ -274,6 +277,28 @@ function playerClicked(div) {
     return;
   }
 
+  if (gameState == STATES.piActionOne) {
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
+      piPick = clickedUsername;
+      socket.emit('pi-action', {
+        username: clickedUsername
+      });
+      audioPlayerClick.play();
+      gameState = STATES.piActionTwo;
+    }
+  }
+
+  if (gameState == STATES.piActionTwo) {
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername) && clickedUsername != piPick) {
+      socket.emit('pi-action', {
+        username: clickedUsername
+      });
+      audioPlayerClick.play();
+      piPick = '';
+      gameState = STATES.doNothing;
+    }
+  }
+
   if (gameState == STATES.robberAction) {
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
       socket.emit('robber-action', {
@@ -308,6 +333,7 @@ function playerClicked(div) {
         usernameSwitch: clickedUsername
       });
       audioPlayerClick.play();
+      witchPick = '';
       gameState = STATES.doNothing;
     }
     return;
@@ -588,6 +614,17 @@ socket.on('doppelganger-poll', function (data) {
 
 });
 
+socket.on('pi-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
 socket.on('witch-poll', function (data) {
   gameState = data.state;
   var usernames = data.usernames;
@@ -714,6 +751,17 @@ socket.on('witch-action-aproved', function (data) {
   var playerDiv = findDiv(username);
 
   revealRole(playerDiv, role);
+});
+
+socket.on('pi-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+  if (role == 'werewolf' || role == 'alpha_wolf' || role == 'mystic_wolf')
+    gameState = STATES.doNothing;
 });
 
 
