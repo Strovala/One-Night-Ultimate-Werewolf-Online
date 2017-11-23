@@ -1197,6 +1197,7 @@ io.sockets.on('connection', function (client) {
       return role.id;
     });
     var centerCardsNumber = getCenterCardsNumber(selectedRoles);
+    console.log(roles);
     console.log(selectedRoles);
     console.log(centerCardsNumber);
 
