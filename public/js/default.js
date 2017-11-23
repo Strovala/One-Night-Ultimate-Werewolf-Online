@@ -13,7 +13,9 @@ var STATES = {
   drunkAction: 8,
   discussion: 9,
   insomniacAction: 10,
-  doppelgangerAction: 11
+  doppelgangerAction: 11,
+  alphaWolfAction: 12,
+  mysticWolfAction: 13
 }
 
 var FUNCS = {
@@ -210,6 +212,20 @@ function playerClicked(div) {
     return;
   }
 
+  if (gameState == STATES.alphaWolfAction) {
+    if (!isCenterCard(clickedUsername)) {
+      playerDiv = findDiv(clickedUsername);
+      var alphaCard = findDiv('c4');
+      animationSwitchCards(alphaCard, playerDiv);
+      socket.emit('alpha-wolf-action', {
+        username: clickedUsername
+      });
+      audioPlayerClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
   if (gameState == STATES.werewolfAction) {
     if (isCenterCard(clickedUsername)) {
       socket.emit('werewolf-action', {
@@ -317,6 +333,10 @@ function findDiv(username) {
     }
   }
   return playerDiv;
+}
+
+function isAlphaCard(username) {
+  return username == 'c4';
 }
 
 function isCenterCard(username) {
@@ -563,6 +583,16 @@ socket.on('insomniac-action-aproved', function (data) {
 
   revealRole(playerDiv, role);
 });
+
+socket.on('alpha-wolf-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+})
 
 socket.on('werewolf-poll', function (data) {
   gameState = data.state;

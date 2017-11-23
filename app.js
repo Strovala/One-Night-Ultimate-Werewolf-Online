@@ -134,7 +134,9 @@ var STATES = {
   drunkAction: 8,
   discussion: 9,
   insomniacAction: 10,
-  doppelgangerAction: 11
+  doppelgangerAction: 11,
+  alphaWolfAction: 12,
+  mysticWolfAction: 13
 }
 
 function clone(obj) {
@@ -189,6 +191,7 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.state = STATES.doNothing;
   this.pollMethods = {
     doppelganger: this.pollDoppelganger,
+    alpha_wolf:   this.pollAlphaWolf,
     werewolf:     this.pollWerewolf,
     minion:       this.pollMinion,
     mason:        this.pollMason,
@@ -327,6 +330,22 @@ Game.prototype.pollIdle = function Game_pollIdle() {
     });
   });
 };
+
+Game.prototype.pollAlphaWolf = function Game_pollAlphaWolf(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.alpha_wolf) : this.getPlayersWithRole(ROLES.doppelganger);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.alphaWolfAction;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('alpha-wolf-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+};
+
 
 Game.prototype.pollWerewolf = function Game_pollWerewolf(doppelganger) {
   var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.werewolf) : this.getPlayersWithRole(ROLES.doppelganger);
@@ -1049,6 +1068,16 @@ io.sockets.on('connection', function (client) {
     // because its D R U N K
     var game = GAMES.exists(client.getGame());
     game.drunkAction(client.username, clickedCard);
+  });
+
+  client.on('alpha-wolf-action', function (data) {
+    var username = data.username;
+
+    console.log('Alpha wolf clicked ' + username);
+
+    var game = GAMES.exists(client.getGame());
+    // Its same as trouble maker
+    game.troublemakerAction(username, 'c4');
   });
 
   client.on('troublemaker-action', function (data) {
