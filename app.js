@@ -1227,6 +1227,7 @@ io.sockets.on('connection', function (client) {
     var selectedRoles = getSelectedRoles(roles);
     var centerCardsNumber = getCenterCardsNumber(selectedRoles);
 
+    console.log(selectedRoles);
     // Check if there is a valid number of players
     var room = ROOMS.exists(roomName);
     room.setCenterCardsNumber(centerCardsNumber);
