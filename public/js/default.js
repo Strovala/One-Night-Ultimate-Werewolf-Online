@@ -304,7 +304,7 @@ function playerClicked(div) {
       playerDiv = findDiv(clickedUsername);
       animationSwitchCards(firstPick, playerDiv);
       socket.emit('witch-action-switch', {
-        usernamePick: troublemakerPick,
+        usernamePick: witchPick,
         usernameSwitch: clickedUsername
       });
       audioPlayerClick.play();
