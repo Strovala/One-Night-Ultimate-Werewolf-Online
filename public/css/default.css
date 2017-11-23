@@ -79,7 +79,8 @@ h1, h2, h3, h4, h5, h6 {
 
 #roles-div {
   display: block;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .modal {
