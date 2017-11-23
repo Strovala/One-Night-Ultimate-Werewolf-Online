@@ -15,7 +15,9 @@ var STATES = {
   insomniacAction: 10,
   doppelgangerAction: 11,
   alphaWolfAction: 12,
-  mysticWolfAction: 13
+  mysticWolfAction: 13,
+  witchActionPick: 14,
+  witchActionSwitch: 15
 }
 
 var FUNCS = {
@@ -30,6 +32,7 @@ var EASE = {
 
 
 var troublemakerPick = '';
+var witchPick = '';
 
 var $start = $('#start');
 var $username = $('#username');
@@ -275,6 +278,34 @@ function playerClicked(div) {
     if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
       socket.emit('robber-action', {
         username: clickedUsername
+      });
+      audioPlayerClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
+  if (gameState == STATES.witchActionPick) {
+    if (isCenterCard(clickedUsername)) {
+      witchPick = clickedUsername;
+      playerDiv = findDiv(clickedUsername);
+      socket.emit('witch-action', {
+        username: clickedUsername
+      });
+      audioPlayerClick.play();
+      gameState = STATES.witchActionSwitch;
+    }
+    return;
+  }
+
+  if (gameState == STATES.witchActionSwitch) {
+    if (!isCenterCard(clickedUsername)) {
+      var firstPick = findDiv(witchPick);
+      playerDiv = findDiv(clickedUsername);
+      animationSwitchCards(firstPick, playerDiv);
+      socket.emit('witch-action-switch', {
+        usernamePick: troublemakerPick,
+        usernameSwitch: clickedUsername
       });
       audioPlayerClick.play();
       gameState = STATES.doNothing;
@@ -557,6 +588,17 @@ socket.on('doppelganger-poll', function (data) {
 
 });
 
+socket.on('witch-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+
+});
+
 socket.on('minion-poll', function (data) {
   gameState = data.state;
   var usernames = data.usernames;
@@ -664,6 +706,16 @@ socket.on('doppelganger-action-aproved', function (data) {
 
   revealRole(playerDiv, role);
 });
+
+socket.on('witch-action-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
 
 socket.on('seer-action-aproved', function (data) {
   var username = data.username;

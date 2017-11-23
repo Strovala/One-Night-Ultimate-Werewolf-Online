@@ -136,7 +136,9 @@ var STATES = {
   insomniacAction: 10,
   doppelgangerAction: 11,
   alphaWolfAction: 12,
-  mysticWolfAction: 13
+  mysticWolfAction: 13,
+  witchActionPick: 14,
+  witchActionSwitch: 15
 }
 
 function clone(obj) {
@@ -198,6 +200,7 @@ var Game = function (gameName, roles, centerCardsNumber) {
     mason:        this.pollMason,
     seer:         this.pollSeer,
     robber:       this.pollRobber,
+    witch:        this.pollWitch,
     troublemaker: this.pollTroublemaker,
     drunk:        this.pollDrunk,
     insomniac:    this.pollInsomniac
@@ -421,6 +424,21 @@ Game.prototype.pollSeer = function Game_pollSeer(doppelganger) {
 
   players.forEach(function (player) {
     player.emit('seer-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+};
+
+Game.prototype.pollWitch = function Game_pollWitch(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.witch) : this.getPlayersWithRole(ROLES.doppelganger);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.witchActionPick;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('witch-poll', {
       usernames: playersUsernames,
       state: state
     });
@@ -1099,6 +1117,17 @@ io.sockets.on('connection', function (client) {
     game.troublemakerAction(username, 'c4');
   });
 
+  client.on('witch-action-switch', function (data) {
+    var usernamePick = data.usernamePick;
+    var usernameSwitch = data.usernameSwitch;
+
+    console.log('Witch action clicked ' + usernamePick + ' and ' + usernameSwitch);
+
+    // Same as troublemaker
+    var game = GAMES.exists(client.getGame());
+    game.troublemakerAction(usernamePick, usernameSwitch);
+  });
+
   client.on('troublemaker-action', function (data) {
     var usernamePick = data.usernamePick;
     var usernameSwitch = data.usernameSwitch;
@@ -1192,6 +1221,21 @@ io.sockets.on('connection', function (client) {
     var role = game.getPlayerRole(clickedCard);
 
     client.emit('werewolf-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
+  });
+
+  client.on('witch-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Witch action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.getGame());
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('witch-action-aproved', {
       username: clickedCard,
       role: role
     });
