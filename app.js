@@ -53,7 +53,7 @@ var ROLES = {
   seer:         'seer',
   pi:           'pi',
   robber:       'robber',
-  witch,        'witch',
+  witch:        'witch',
   troublemaker: 'troublemaker',
   vi:           'vi',
   drunk:        'drunk',
@@ -65,16 +65,16 @@ var ROLES = {
 
 var ROLE_TILES = [
   { id: ROLES.doppelganger, clicked: false }, { id: ROLES.alpha_wolf, clicked: false },
-  { id: ROLES.mystic_wolf, clicked: false },  { id: ROLES.werewolf, clicked: false },
-  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
-  { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
-  { id: ROLES.seer,         clicked: false }, { id: ROLES.pi,   clicked: false },
-  { id: ROLES.robber,   clicked: false },     { id: ROLES.witch,   clicked: false },
-  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.vi,    clicked: false },
-  { id: ROLES.drunk,    clicked: false },
-  { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
-  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
-  { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
+  { id: ROLES.mystic_wolf,  clicked: false }, { id: ROLES.werewolf,   clicked: false },
+  { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,     clicked: false },
+  { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,      clicked: false },
+  { id: ROLES.seer,         clicked: false }, { id: ROLES.pi,         clicked: false },
+  { id: ROLES.robber,       clicked: false }, { id: ROLES.witch,      clicked: false },
+  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.vi,         clicked: false },
+  { id: ROLES.drunk,        clicked: false },
+  { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager,   clicked: false },
+  { id: ROLES.villager,     clicked: false }, { id: ROLES.villager,   clicked: false },
+  { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,     clicked: false }
 ];
 
 var POSITIONS = [
