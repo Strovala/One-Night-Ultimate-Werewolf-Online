@@ -45,12 +45,17 @@ app.get('/test', function (req, res) {
 
 var ROLES = {
   doppelganger: 'doppelganger',
+  aplha_wolf:   'alpha_wolf',
+  mystic_wolf:  'mystic_wolf',
   werewolf:     'werewolf',
   minion:       'minion',
   mason:        'mason',
   seer:         'seer',
+  pi:           'pi',
   robber:       'robber',
+  witch,        'witch',
   troublemaker: 'troublemaker',
+  vi:           'vi',
   drunk:        'drunk',
   insomniac:    'insomniac',
   villager:     'villager',
@@ -58,23 +63,15 @@ var ROLES = {
   tanner:       'tanner'
 }
 
-// ROLE_TILES = [
-//   { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf, clicked: false },
-//   { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
-//   { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
-//   { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
-//   { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
-//   { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
-//   { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
-//   { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
-// ];
-
 var ROLE_TILES = [
-  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.werewolf, clicked: false },
+  { id: ROLES.doppelganger, clicked: false }, { id: ROLES.alpha_wolf, clicked: false },
+  { id: ROLES.mystic_wolf, clicked: false },  { id: ROLES.werewolf, clicked: false },
   { id: ROLES.werewolf,     clicked: false }, { id: ROLES.minion,   clicked: false },
   { id: ROLES.mason,        clicked: false }, { id: ROLES.mason,    clicked: false },
-  { id: ROLES.seer,         clicked: false }, { id: ROLES.robber,   clicked: false },
-  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.drunk,    clicked: false },
+  { id: ROLES.seer,         clicked: false }, { id: ROLES.pi,   clicked: false },
+  { id: ROLES.robber,   clicked: false },     { id: ROLES.witch,   clicked: false },
+  { id: ROLES.troublemaker, clicked: false }, { id: ROLES.vi,    clicked: false },
+  { id: ROLES.drunk,    clicked: false },
   { id: ROLES.insomniac,    clicked: false }, { id: ROLES.villager, clicked: false },
   { id: ROLES.villager,     clicked: false }, { id: ROLES.villager, clicked: false },
   { id: ROLES.hunter,       clicked: false }, { id: ROLES.tanner,   clicked: false }
