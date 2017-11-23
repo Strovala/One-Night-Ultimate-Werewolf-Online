@@ -1193,20 +1193,15 @@ io.sockets.on('connection', function (client) {
   client.on('start-game-request', function (data) {
     var roles = data.roles;
     var roomName = data.roomName;
-    var selectedRoles = data.roles.map(function (role) {
-      return role.id;
-    });
+
+    // Get selected roles
+    var selectedRoles = getSelectedRoles(roles);
     var centerCardsNumber = getCenterCardsNumber(selectedRoles);
-    console.log(roles);
-    console.log(selectedRoles);
-    console.log(centerCardsNumber);
 
     // Check if there is a valid number of players
     var room = ROOMS.exists(roomName);
     room.setCenterCardsNumber(centerCardsNumber);
 
-    // Get selected roles
-    var selectedRoles = getSelectedRoles(roles);
     room.setSelectedRoles(selectedRoles);
 
     if (!room.validPlayersNumber()) {
