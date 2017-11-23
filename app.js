@@ -574,7 +574,8 @@ Room.prototype.validPlayersNumber = function Room_validPlayersNumber() {
 
 Room.prototype.validRolesNumber = function Room_validRolesNumber() {
   var roomPlayersNumber = this.getPlayersNumber();
-  return roomPlayersNumber + this.centerCardsNumber == this.selectedRoles.length;
+  // return roomPlayersNumber + this.centerCardsNumber == this.selectedRoles.length;
+  return roomPlayersNumber + 3 == this.selectedRoles.length;
 };
 
 Room.prototype.setCenterCardsNumber = function Room_setCenterCardsNumber(centerCardsNumber) {
@@ -633,13 +634,17 @@ Room.prototype.getRolesMap = function Room_getRolesMap() {
 
   for (var i = 1; i <= this.centerCardsNumber; i++) {
     // Assign random role to center card
-    var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
-    var role = rolesToAssign[randomRoleIndex];
-    rolesMap['c' + i] = role.id;
-    console.log('Assigned role ' + role.id + ' to player c' + i);
+    if (i == 4) {
+      rolesMap['c' + i] = 'werewolf';
+    } else {
+      var randomRoleIndex = Math.floor(Math.random() * rolesToAssign.length);
+      var role = rolesToAssign[randomRoleIndex];
+      rolesMap['c' + i] = role.id;
+      console.log('Assigned role ' + role.id + ' to player c' + i);
 
-    // Delete that role from array
-    rolesToAssign.splice(randomRoleIndex, 1);
+      // Delete that role from array
+      rolesToAssign.splice(randomRoleIndex, 1);
+    }
   }
 
   return rolesMap;
