@@ -789,7 +789,10 @@ function getSelectedRoles(roles) {
 }
 
 function getCenterCardsNumber(roles) {
-  return roles.indexOf(ROLES.alpha_wolf) < 0 ? 3 : 4;
+  var selectedRoles = roles.map(function (role) {
+    return role.id;
+  });
+  return selectedRoles.indexOf(ROLES.alpha_wolf) < 0 ? 3 : 4;
 }
 
 function deleteRoom(roomName) {
