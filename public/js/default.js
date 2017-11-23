@@ -760,7 +760,7 @@ socket.on('pi-action-aproved', function (data) {
   var playerDiv = findDiv(username);
 
   revealRole(playerDiv, role);
-  if (role == 'werewolf' || role == 'alpha_wolf' || role == 'mystic_wolf')
+  if (role == 'werewolf' || role == 'alpha_wolf' || role == 'mystic_wolf' || role == 'minion' || role == 'dream_wolf')
     gameState = STATES.doNothing;
 });
 
