@@ -192,6 +192,7 @@ var Game = function (gameName, roles, centerCardsNumber) {
   this.pollMethods = {
     doppelganger: this.pollDoppelganger,
     alpha_wolf:   this.pollAlphaWolf,
+    mystic_wolf:  this.pollMysticWolf,
     werewolf:     this.pollWerewolf,
     minion:       this.pollMinion,
     mason:        this.pollMason,
@@ -420,6 +421,21 @@ Game.prototype.pollSeer = function Game_pollSeer(doppelganger) {
 
   players.forEach(function (player) {
     player.emit('seer-poll', {
+      usernames: playersUsernames,
+      state: state
+    });
+  });
+};
+
+Game.prototype.pollMysticWolf = function Game_pollMysticWolf(doppelganger) {
+  var players = doppelganger == undefined ? this.getPlayersWithRole(ROLES.mystic_wolf) : this.getPlayersWithRole(ROLES.doppelganger);
+  var playersUsernames = getPlayersUsernames(players);
+
+  var state = STATES.mysticWolfAction;
+  this.setState(state);
+
+  players.forEach(function (player) {
+    player.emit('mystic-wolf-poll', {
       usernames: playersUsernames,
       state: state
     });
@@ -1146,6 +1162,21 @@ io.sockets.on('connection', function (client) {
     var role = game.getPlayerRole(clickedCard);
 
     client.emit('seer-action-aproved', {
+      username: clickedCard,
+      role: role
+    });
+  });
+
+  client.on('mystic-wolf-action', function (data) {
+    var clickedCard = data.username;
+
+    console.log('Mystic wolf action clicked ' + clickedCard);
+
+    // Get role of clicked card
+    var game = GAMES.exists(client.getGame());
+    var role = game.getPlayerRole(clickedCard);
+
+    client.emit('mystic-wolf-action-aproved', {
       username: clickedCard,
       role: role
     });

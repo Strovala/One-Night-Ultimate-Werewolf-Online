@@ -226,6 +226,18 @@ function playerClicked(div) {
     return;
   }
 
+  if (gameState == STATES.mysticWolfAction) {
+    if (!isCenterCard(clickedUsername) && !isMyself(clickedUsername)) {
+      playerDiv = findDiv(clickedUsername);
+      socket.emit('mystic-wolf-action', {
+        username: clickedUsername
+      });
+      audioPlayerClick.play();
+      gameState = STATES.doNothing;
+    }
+    return;
+  }
+
   if (gameState == STATES.werewolfAction) {
     if (isCenterCard(clickedUsername)) {
       socket.emit('werewolf-action', {
@@ -519,6 +531,18 @@ socket.on('see-role-aproved', function (data) {
   revealRole(playerDiv, role);
 });
 
+socket.on('mystic-wolf-role-aproved', function (data) {
+  var username = data.username;
+  var role = data.role;
+
+  socket.username = username;
+  socket.role = role;
+
+  var playerDiv = findDiv(username);
+
+  revealRole(playerDiv, role);
+});
+
 socket.on('saw-role-aproved', function (data) {
   var playerDiv = findDiv(socket.username);
 
@@ -585,6 +609,16 @@ socket.on('insomniac-action-aproved', function (data) {
 });
 
 socket.on('alpha-wolf-poll', function (data) {
+  gameState = data.state;
+  var usernames = data.usernames;
+
+  usernames.forEach(function (username) {
+    var playerDiv = findDiv(username);
+    startBlinking(playerDiv);
+  });
+})
+
+socket.on('mystic-wolf-poll', function (data) {
   gameState = data.state;
   var usernames = data.usernames;
 
