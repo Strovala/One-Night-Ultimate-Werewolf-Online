@@ -45,7 +45,7 @@ app.get('/test', function (req, res) {
 
 var ROLES = {
   doppelganger: 'doppelganger',
-  aplha_wolf:   'alpha_wolf',
+  alpha_wolf:   'alpha_wolf',
   mystic_wolf:  'mystic_wolf',
   werewolf:     'werewolf',
   minion:       'minion',
@@ -765,7 +765,7 @@ function getSelectedRoles(roles) {
 }
 
 function getCenterCardsNumber(roles) {
-  return roles.indexOf(ROLES.alphaWolf) < 0 ? 3 : 4;
+  return roles.indexOf(ROLES.alpha_wolf) < 0 ? 3 : 4;
 }
 
 function deleteRoom(roomName) {
