@@ -1,9 +1,9 @@
 table
   - var roles= rolesList
   -
-    var rows = []
+    var rows = [];
     for (var i = 0; i < rolesList.length; i+=4) {
-      rows.append(roles.slice(i, i + 4));
+      rows.push(roles.slice(i, i + 4));
     }
     console.log(rows);
   each row in rows
