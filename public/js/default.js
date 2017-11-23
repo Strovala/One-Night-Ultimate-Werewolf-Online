@@ -531,12 +531,9 @@ socket.on('see-role-aproved', function (data) {
   revealRole(playerDiv, role);
 });
 
-socket.on('mystic-wolf-role-aproved', function (data) {
+socket.on('mystic-wolf-action-aproved', function (data) {
   var username = data.username;
   var role = data.role;
-
-  socket.username = username;
-  socket.role = role;
 
   var playerDiv = findDiv(username);
 
